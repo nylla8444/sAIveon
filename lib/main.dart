@@ -8,6 +8,7 @@ import 'widgets/transaction_history_section.dart';
 import 'widgets/monthly_budget_section.dart';
 import 'widgets/spending_line_chart_section.dart';
 import 'widgets/expenses_horizontal_scroll_section.dart';
+import 'widgets/scheduled_payments_section.dart';
 
 void main() {
   runApp(const MyApp());
@@ -280,69 +281,51 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                             // TODO: Navigate to all expenses page
                             print('Expenses See All tapped');
                           },
-                        ), // Scheduled Payments
-                        const SizedBox(height: 30),
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF101010),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.06),
-                              width: 2,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Scheduled Payments',
-                                    style: TextStyle(
-                                      color: Color(0xFFD6D6D6),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const Text(
-                                    'See All',
-                                    style: TextStyle(
-                                      color: Color(0xFFC6C6C6),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
-                              _buildPaymentItem(
-                                'Car Insurance',
-                                '-\$65',
-                                'Due date in 15 days',
-                                '12 Oct',
-                              ),
-                              const SizedBox(height: 10),
-                              _buildPaymentItem(
-                                'Internet',
-                                '-\$35',
-                                'Overdue',
-                                '10 Oct',
-                                isOverdue: true,
-                              ),
-                              const SizedBox(height: 10),
-                              _buildPaymentItem(
-                                'Home Service Fee',
-                                '-\$35',
-                                'Overdue',
-                                '10 Oct',
-                                isOverdue: true,
-                              ),
-                            ],
-                          ),
                         ),
 
+                        // Scheduled Payments - Using modular component
+                        const SizedBox(height: 30),
+                        ScheduledPaymentsSection(
+                          payments: [
+                            ScheduledPaymentData(
+                              title: 'Car Insurance',
+                              amount: '-\$65',
+                              status: 'Due date in 15 days',
+                              date: '12 Oct',
+                              isOverdue: false,
+                              icon: Icons.drive_eta,
+                              onTap: () {
+                                print('Car Insurance payment tapped');
+                              },
+                            ),
+                            ScheduledPaymentData(
+                              title: 'Internet',
+                              amount: '-\$35',
+                              status: 'Overdue',
+                              date: '10 Oct',
+                              isOverdue: true,
+                              icon: Icons.wifi,
+                              onTap: () {
+                                print('Internet payment tapped');
+                              },
+                            ),
+                            ScheduledPaymentData(
+                              title: 'Home Service Fee',
+                              amount: '-\$35',
+                              status: 'Overdue',
+                              date: '10 Oct',
+                              isOverdue: true,
+                              icon: Icons.home,
+                              onTap: () {
+                                print('Home Service Fee payment tapped');
+                              },
+                            ),
+                          ],
+                          onSeeAllTap: () {
+                            // TODO: Navigate to all scheduled payments page
+                            print('Scheduled Payments See All tapped');
+                          },
+                        ),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -444,82 +427,6 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
           ), // Match background color for proper contrast
           size: 32,
         ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentItem(
-    String title,
-    String amount,
-    String status,
-    String date, {
-    bool isOverdue = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: Colors.grey[800],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.receipt, color: Colors.white, size: 12),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFFD6D6D6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  status,
-                  style: TextStyle(
-                    color: isOverdue
-                        ? const Color(0xFFFF8282)
-                        : const Color(0xFFADACAC),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  color: Color(0xFFD6D6D6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: const TextStyle(
-                  color: Color(0xFFADACAC),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: Color(0xFFD6D6D6), size: 15),
-        ],
       ),
     );
   }
