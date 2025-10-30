@@ -7,6 +7,7 @@ import 'widgets/banks_horizontal_scroll_section.dart';
 import 'widgets/transaction_history_section.dart';
 import 'widgets/monthly_budget_section.dart';
 import 'widgets/spending_line_chart_section.dart';
+import 'widgets/expenses_horizontal_scroll_section.dart';
 
 void main() {
   runApp(const MyApp());
@@ -224,57 +225,62 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                               const FlSpot(6, 1900),
                             ],
                           },
-                        ), // Expenses Section
-                        const SizedBox(height: 30),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Expenses',
-                              style: TextStyle(
-                                color: Color(0xFFD6D6D6),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Text(
-                              'See All',
-                              style: TextStyle(
-                                color: Color(0xFFC6C6C6),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 15),
-                        SizedBox(
-                          height: 148,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              _buildExpenseCard(
-                                'Groceries',
-                                '\$44',
-                                '15%',
-                                true,
-                              ),
-                              const SizedBox(width: 10),
-                              _buildExpenseCard(
-                                'Shopping',
-                                '\$158',
-                                '2%',
-                                false,
-                              ),
-                              const SizedBox(width: 10),
-                              _buildExpenseCard('Food', '\$44', '15%', true),
-                              const SizedBox(width: 10),
-                              _buildExpenseCard('Toys', '\$44', '15%', true),
-                            ],
-                          ),
                         ),
 
-                        // Scheduled Payments
+                        // Expenses Section - Using modular component
+                        const SizedBox(height: 30),
+                        ExpensesHorizontalScrollSection(
+                          expenses: [
+                            ExpenseData(
+                              category: 'Groceries',
+                              amount: '\$44',
+                              percentage: '15%',
+                              isIncrease: true,
+                              icon: Icons.shopping_cart,
+                              onTap: () {
+                                print('Groceries expense tapped');
+                              },
+                            ),
+                            ExpenseData(
+                              category: 'Shopping',
+                              amount: '\$158',
+                              percentage: '2%',
+                              isIncrease: false,
+                              icon: Icons.shopping_bag,
+                              onTap: () {
+                                print('Shopping expense tapped');
+                              },
+                            ),
+                            ExpenseData(
+                              category: 'Food',
+                              amount: '\$44',
+                              percentage: '15%',
+                              isIncrease: true,
+                              icon: Icons.restaurant,
+                            ),
+                            ExpenseData(
+                              category: 'Toys',
+                              amount: '\$44',
+                              percentage: '15%',
+                              isIncrease: true,
+                              icon: Icons.toys,
+                            ),
+                            ExpenseData(
+                              category: 'Transport',
+                              amount: '\$120',
+                              percentage: '8%',
+                              isIncrease: true,
+                              icon: Icons.directions_car,
+                              onTap: () {
+                                print('Transport expense tapped');
+                              },
+                            ),
+                          ],
+                          onSeeAllTap: () {
+                            // TODO: Navigate to all expenses page
+                            print('Expenses See All tapped');
+                          },
+                        ), // Scheduled Payments
                         const SizedBox(height: 30),
                         Container(
                           padding: const EdgeInsets.all(20),
@@ -438,76 +444,6 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
           ), // Match background color for proper contrast
           size: 32,
         ),
-      ),
-    );
-  }
-
-  Widget _buildExpenseCard(
-    String category,
-    String amount,
-    String percentage,
-    bool isIncrease,
-  ) {
-    return Container(
-      width: 89,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF191919),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05), width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 33,
-            height: 33,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE6E6E6),
-              borderRadius: BorderRadius.circular(16.5),
-            ),
-            child: const Icon(
-              Icons.shopping_cart,
-              color: Colors.black,
-              size: 18,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            category,
-            style: const TextStyle(
-              color: Color(0xFFD6D6D6),
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            amount,
-            style: const TextStyle(color: Color(0xFFB7B7B7), fontSize: 12),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                isIncrease ? Icons.arrow_upward : Icons.arrow_downward,
-                color: isIncrease
-                    ? const Color(0xFFFF8282)
-                    : const Color(0xFF8CFF82),
-                size: 10,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                percentage,
-                style: const TextStyle(
-                  color: Color(0xFFD6D6D6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
