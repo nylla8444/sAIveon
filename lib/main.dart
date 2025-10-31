@@ -11,6 +11,7 @@ import 'widgets/expenses_horizontal_scroll_section.dart';
 import 'widgets/scheduled_payments_section.dart';
 import 'pages/statistics_page.dart';
 import 'pages/ai_page.dart';
+import 'pages/more_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -58,13 +59,7 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
       case 2:
         return const AIPage();
       case 3:
-        return const Center(
-          child: Text('Budgets Page', style: TextStyle(color: Colors.white)),
-        );
-      case 4:
-        return const Center(
-          child: Text('Profile Page', style: TextStyle(color: Colors.white)),
-        );
+        return const MorePage();
       default:
         return _buildHomePage();
     }
@@ -397,8 +392,8 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                             ),
                             _buildNavItem(Icons.bar_chart_outlined, 1),
                             const SizedBox(width: 60),
-                            _buildNavItem(Icons.auto_awesome_outlined, 3),
-                            _buildNavItem(Icons.apps_outlined, 4),
+                            _buildNavItem(Icons.auto_awesome_outlined, 2),
+                            _buildNavItem(Icons.apps_outlined, 3),
                           ],
                         ),
                       ),
