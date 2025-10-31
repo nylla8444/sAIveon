@@ -10,6 +10,7 @@ import 'widgets/spending_line_chart_section.dart';
 import 'widgets/expenses_horizontal_scroll_section.dart';
 import 'widgets/scheduled_payments_section.dart';
 import 'pages/statistics_page.dart';
+import 'pages/ai_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -55,9 +56,7 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
       case 1:
         return const StatisticsPage();
       case 2:
-        return const Center(
-          child: Text('Add Page', style: TextStyle(color: Colors.white)),
-        );
+        return const AIPage();
       case 3:
         return const Center(
           child: Text('Budgets Page', style: TextStyle(color: Colors.white)),
@@ -74,18 +73,6 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
   Widget _buildHomePage() {
     return Column(
       children: [
-        // Top Header Section - Using modular HeaderSection widget
-        HeaderSection(
-          userName: 'Allyn Ralf Ledesma',
-          hasNotification: true,
-          onProfileTap: () {
-            // TODO: Navigate to profile page
-          },
-          onNotificationTap: () {
-            // TODO: Navigate to notifications page
-          },
-        ),
-
         // Scrollable Content
         Expanded(
           child: SingleChildScrollView(
@@ -93,8 +80,21 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Top Header Section - Using modular HeaderSection widget
+                const SizedBox(height: 20),
+                HeaderSection(
+                  userName: 'Allyn Ralf Ledesma',
+                  hasNotification: true,
+                  onProfileTap: () {
+                    // TODO: Navigate to profile page
+                  },
+                  onNotificationTap: () {
+                    // TODO: Navigate to notifications page
+                  },
+                ),
+
                 // Balance Section - Using modular BalanceSection widget
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
                 const BalanceSection(balance: '\$888.00'),
 
                 // Achievement Card - Using modular AchievementCardSection with donut chart
