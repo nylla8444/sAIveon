@@ -12,6 +12,7 @@ import 'widgets/scheduled_payments_section.dart';
 import 'pages/statistics_page.dart';
 import 'pages/ai_page.dart';
 import 'pages/more_page.dart';
+import 'pages/add_transaction_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -428,7 +429,12 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
 
   Widget _buildCenterButton() {
     return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = 2),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AddTransactionPage()),
+        );
+      },
       child: Container(
         width: 52,
         height: 52,
