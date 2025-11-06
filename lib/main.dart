@@ -16,6 +16,8 @@ import 'pages/add_transaction_page.dart';
 import 'pages/add_bank_page.dart';
 import 'pages/notifications_page.dart';
 import 'pages/bank_detail_page.dart';
+import 'pages/transaction_history_page.dart';
+import 'pages/monthly_budget_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -244,8 +246,12 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                     ),
                   ],
                   onSeeAllTap: () {
-                    // TODO: Navigate to full transaction history page
-                    print('See All transactions tapped');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TransactionHistoryPage(),
+                      ),
+                    );
                   },
                 ),
 
@@ -255,8 +261,12 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                   spent: 3300,
                   limit: 5000,
                   onSeeAllTap: () {
-                    // TODO: Navigate to budget details
-                    print('Monthly Budget See All tapped');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MonthlyBudgetPage(),
+                      ),
+                    );
                   },
                 ),
 
