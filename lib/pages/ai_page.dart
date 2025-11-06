@@ -3,6 +3,7 @@ import '../widgets/header_section.dart';
 import '../widgets/ai_welcome_section.dart';
 import '../widgets/new_chat_button.dart';
 import '../widgets/previous_chats_section.dart';
+import 'notifications_page.dart';
 
 class AIPage extends StatelessWidget {
   const AIPage({super.key});
@@ -27,7 +28,12 @@ class AIPage extends StatelessWidget {
                     // TODO: Navigate to profile page
                   },
                   onNotificationTap: () {
-                    // TODO: Navigate to notifications page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsPage(),
+                      ),
+                    );
                   },
                 ),
 

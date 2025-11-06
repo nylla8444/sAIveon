@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/header_section.dart';
 import '../widgets/menu_card.dart';
+import 'notifications_page.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -25,7 +26,12 @@ class MorePage extends StatelessWidget {
                     // TODO: Navigate to profile page
                   },
                   onNotificationTap: () {
-                    // TODO: Navigate to notifications page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsPage(),
+                      ),
+                    );
                   },
                 ),
 

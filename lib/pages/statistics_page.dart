@@ -6,6 +6,7 @@ import '../widgets/income_value_section.dart';
 import '../widgets/expenses_value_section.dart';
 import '../widgets/last_6_periods_section.dart';
 import '../widgets/balance_with_banks_section.dart';
+import 'notifications_page.dart';
 
 class StatisticsPage extends StatelessWidget {
   const StatisticsPage({super.key});
@@ -22,7 +23,7 @@ class StatisticsPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header Section - Name, Profile Picture, Notification Bell
-                _buildHeader(),
+                _buildHeader(context),
 
                 const SizedBox(height: 20),
 
@@ -191,7 +192,7 @@ class StatisticsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return SizedBox(
       height: 28,
       child: Row(
@@ -228,33 +229,43 @@ class StatisticsPage extends StatelessWidget {
           ),
 
           // Notification Bell with red dot
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 15,
-                height: 16,
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.notifications_outlined,
-                  color: Colors.white,
-                  size: 15,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsPage(),
                 ),
-              ),
-              // Red notification dot
-              Positioned(
-                right: -2,
-                top: -2,
-                child: Container(
-                  width: 5,
-                  height: 5,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF8282),
-                    shape: BoxShape.circle,
+              );
+            },
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 15,
+                  height: 16,
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.notifications_outlined,
+                    color: Colors.white,
+                    size: 15,
                   ),
                 ),
-              ),
-            ],
+                // Red notification dot
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    width: 5,
+                    height: 5,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFF8282),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

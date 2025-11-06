@@ -13,6 +13,9 @@ import 'pages/statistics_page.dart';
 import 'pages/ai_page.dart';
 import 'pages/more_page.dart';
 import 'pages/add_transaction_page.dart';
+import 'pages/add_bank_page.dart';
+import 'pages/notifications_page.dart';
+import 'pages/bank_detail_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -85,7 +88,12 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                     // TODO: Navigate to profile page
                   },
                   onNotificationTap: () {
-                    // TODO: Navigate to notifications page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsPage(),
+                      ),
+                    );
                   },
                 ),
 
@@ -115,12 +123,26 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       amount: '\$120',
                       icon: Icons.account_balance,
                       onTap: () {
-                        // TODO: Navigate to Bank A details
-                        print('Bank A tapped');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BankDetailPage(
+                              bankName: 'Bank A',
+                              balance: '\$120',
+                            ),
+                          ),
+                        );
                       },
                       onArrowTap: () {
-                        // TODO: Navigate to Bank A details
-                        print('Bank A arrow tapped');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BankDetailPage(
+                              bankName: 'Bank A',
+                              balance: '\$120',
+                            ),
+                          ),
+                        );
                       },
                     ),
                     BankCardData(
@@ -128,7 +150,15 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       amount: '\$440',
                       icon: Icons.account_balance,
                       onTap: () {
-                        print('Bank B tapped');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BankDetailPage(
+                              bankName: 'Bank B',
+                              balance: '\$440',
+                            ),
+                          ),
+                        );
                       },
                     ),
                     BankCardData(
@@ -136,7 +166,15 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       amount: '\$154',
                       icon: Icons.account_balance,
                       onTap: () {
-                        print('Bank C tapped');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BankDetailPage(
+                              bankName: 'Bank C',
+                              balance: '\$154',
+                            ),
+                          ),
+                        );
                       },
                     ),
                     BankCardData(
@@ -144,10 +182,26 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       amount: '\$174',
                       icon: Icons.account_balance,
                       onTap: () {
-                        print('Bank D tapped');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BankDetailPage(
+                              bankName: 'Bank D',
+                              balance: '\$174',
+                            ),
+                          ),
+                        );
                       },
                     ),
                   ],
+                  onAddBank: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddBankPage(),
+                      ),
+                    );
+                  },
                 ),
 
                 // Transaction History - Using modular component
