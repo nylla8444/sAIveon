@@ -200,13 +200,19 @@ class PaymentItem extends StatelessWidget {
             ),
 
             // Arrow - rightmost
-            const Positioned(
-              right: 15,
-              top: 26,
-              child: Icon(
-                Icons.chevron_right,
-                color: Color(0xFFD6D6D6),
-                size: 15,
+            Positioned(
+              right: 10,
+              top: 20,
+              child: GestureDetector(
+                onTap: payment.onTap,
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  child: const Icon(
+                    Icons.chevron_right,
+                    color: Color(0xFFD6D6D6),
+                    size: 24,
+                  ),
+                ),
               ),
             ),
           ],

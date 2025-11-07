@@ -18,6 +18,8 @@ import 'pages/notifications_page.dart';
 import 'pages/bank_detail_page.dart';
 import 'pages/transaction_history_page.dart';
 import 'pages/monthly_budget_page.dart';
+import 'pages/scheduled_payments_page.dart';
+import 'pages/scheduled_payment_detail_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -362,7 +364,19 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       isOverdue: false,
                       icon: Icons.drive_eta,
                       onTap: () {
-                        print('Car Insurance payment tapped');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const ScheduledPaymentDetailPage(
+                                  title: 'Car Insurance',
+                                  amount: '-\$65',
+                                  status: 'Due date in 15 days',
+                                  date: '12 Oct',
+                                  icon: Icons.drive_eta,
+                                ),
+                          ),
+                        );
                       },
                     ),
                     ScheduledPaymentData(
@@ -373,7 +387,19 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       isOverdue: true,
                       icon: Icons.wifi,
                       onTap: () {
-                        print('Internet payment tapped');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const ScheduledPaymentDetailPage(
+                                  title: 'Internet',
+                                  amount: '-\$35',
+                                  status: 'Overdue',
+                                  date: '10 Oct',
+                                  icon: Icons.wifi,
+                                ),
+                          ),
+                        );
                       },
                     ),
                     ScheduledPaymentData(
@@ -384,13 +410,29 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       isOverdue: true,
                       icon: Icons.home,
                       onTap: () {
-                        print('Home Service Fee payment tapped');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const ScheduledPaymentDetailPage(
+                                  title: 'Home Service Fee',
+                                  amount: '-\$35',
+                                  status: 'Overdue',
+                                  date: '10 Oct',
+                                  icon: Icons.home,
+                                ),
+                          ),
+                        );
                       },
                     ),
                   ],
                   onSeeAllTap: () {
-                    // TODO: Navigate to all scheduled payments page
-                    print('Scheduled Payments See All tapped');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ScheduledPaymentsPage(),
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: 100),
