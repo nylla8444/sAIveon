@@ -1,0 +1,242 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+class AddExpensePage extends StatefulWidget {
+  const AddExpensePage({super.key});
+
+  @override
+  State<AddExpensePage> createState() => _AddExpensePageState();
+}
+
+class _AddExpensePageState extends State<AddExpensePage> {
+  final TextEditingController _categoryController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+
+  @override
+  void dispose() {
+    _categoryController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF050505),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Return button
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 4,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(
+                          Icons.arrow_back_ios,
+                          color: Color(0xFFD6D6D6),
+                          size: 16,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Return',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            color: Color(0xFFD6D6D6),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            height: 1.366,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Main card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF101010),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      const Text(
+                        'Add Expense',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          color: Color(0xFFD6D6D6),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.366,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Category Field
+                      _buildCategoryField(),
+
+                      const SizedBox(height: 15),
+
+                      // Amount Field
+                      _buildAmountField(),
+
+                      const SizedBox(height: 25),
+
+                      // Save button
+                      GestureDetector(
+                        onTap: () {
+                          // TODO: Save the expense data
+                          print(
+                            'Save expense: ${_categoryController.text}, ${_amountController.text}',
+                          );
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFBA9BFF),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'Save',
+                            style: TextStyle(
+                              fontFamily: 'Manrope',
+                              color: Color(0xFF050505),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              height: 1.366,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Expense Category',
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            color: Color(0xFFD6D6D6),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            height: 1.366,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFF191919),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: _categoryController,
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              color: Color(0xFFD6D6D6),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: const InputDecoration(
+              hintText: 'e.g. Shopping, Food, Transport',
+              hintStyle: TextStyle(
+                fontFamily: 'Manrope',
+                color: Color(0xFF666666),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAmountField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Amount',
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            color: Color(0xFFD6D6D6),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            height: 1.366,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFF191919),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: _amountController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              color: Color(0xFFD6D6D6),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: const InputDecoration(
+              hintText: '\$0',
+              hintStyle: TextStyle(
+                fontFamily: 'Manrope',
+                color: Color(0xFF666666),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 14),
+              prefixText: '\$ ',
+              prefixStyle: TextStyle(
+                fontFamily: 'Manrope',
+                color: Color(0xFFD6D6D6),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

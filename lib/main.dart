@@ -314,9 +314,6 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       percentage: '15%',
                       isIncrease: true,
                       icon: Icons.shopping_cart,
-                      onTap: () {
-                        print('Groceries expense tapped');
-                      },
                     ),
                     ExpenseData(
                       category: 'Shopping',
@@ -324,9 +321,6 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       percentage: '2%',
                       isIncrease: false,
                       icon: Icons.shopping_bag,
-                      onTap: () {
-                        print('Shopping expense tapped');
-                      },
                     ),
                     ExpenseData(
                       category: 'Food',
@@ -348,9 +342,6 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       percentage: '8%',
                       isIncrease: true,
                       icon: Icons.directions_car,
-                      onTap: () {
-                        print('Transport expense tapped');
-                      },
                     ),
                   ],
                   onSeeAllTap: () {

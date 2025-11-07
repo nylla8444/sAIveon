@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../pages/add_expense_page.dart';
+import '../pages/expense_detail_page.dart';
 
 class ExpenseData {
   final String category;
@@ -21,11 +23,13 @@ class ExpenseData {
 class ExpensesHorizontalScrollSection extends StatelessWidget {
   final List<ExpenseData> expenses;
   final VoidCallback? onSeeAllTap;
+  final VoidCallback? onAddExpense;
 
   const ExpensesHorizontalScrollSection({
     super.key,
     required this.expenses,
     this.onSeeAllTap,
+    this.onAddExpense,
   });
 
   @override
@@ -72,14 +76,65 @@ class ExpensesHorizontalScrollSection extends StatelessWidget {
           height: 148,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: expenses.length,
+            itemCount: expenses.length + 1, // +1 for the add button
             separatorBuilder: (context, index) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
+              // Show add expense button at the end
+              if (index == expenses.length) {
+                return _buildAddExpenseButton(context);
+              }
               return ExpenseCard(expense: expenses[index]);
             },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAddExpenseButton(BuildContext context) {
+    return GestureDetector(
+      onTap:
+          onAddExpense ??
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AddExpensePage()),
+            );
+          },
+      child: Container(
+        width: 89,
+        height: 148,
+        decoration: BoxDecoration(
+          color: const Color(0xFF101010),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF191919), width: 1),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFF191919),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Icon(Icons.add, color: Color(0xFFBA9BFF), size: 28),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Add\nExpense',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                color: Color(0xFFD6D6D6),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -92,7 +147,22 @@ class ExpenseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: expense.onTap,
+      onTap:
+          expense.onTap ??
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ExpenseDetailPage(
+                  category: expense.category,
+                  amount: expense.amount,
+                  percentage: expense.percentage,
+                  isIncrease: expense.isIncrease,
+                  icon: expense.icon,
+                ),
+              ),
+            );
+          },
       child: Container(
         width: 89,
         height: 148,
