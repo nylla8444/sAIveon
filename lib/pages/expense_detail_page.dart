@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/custom_back_button.dart';
 
 class ExpenseDetailPage extends StatelessWidget {
   final String category;
@@ -26,19 +27,21 @@ class ExpenseDetailPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back button
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Text(
-                  '< $category Expenses',
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    color: Color(0xFFD6D6D6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    height: 1.366,
+              // Header with back button and title
+              Row(
+                children: [
+                  const CustomBackButton(),
+                  const SizedBox(width: 12),
+                  Text(
+                    '$category Expenses',
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                ],
               ),
 
               const SizedBox(height: 19),

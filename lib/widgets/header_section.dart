@@ -20,15 +20,15 @@ class HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 28,
+      height: 36,
       child: Row(
         children: [
           // Profile Picture (Layer 6 - circular avatar)
           GestureDetector(
             onTap: onProfileTap,
             child: Container(
-              width: 28,
-              height: 28,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: const Color(0xFFD6D6D6),
                 shape: BoxShape.circle,
@@ -40,12 +40,12 @@ class HeaderSection extends StatelessWidget {
               child: const Icon(
                 Icons.person,
                 color: Color(0xFF050505),
-                size: 16,
+                size: 20,
               ),
             ),
           ),
 
-          const SizedBox(width: 7),
+          const SizedBox(width: 10),
 
           // User Name (Poppins 500, 14px) - Left aligned next to profile
           Expanded(
@@ -54,8 +54,8 @@ class HeaderSection extends StatelessWidget {
               style: const TextStyle(
                 fontFamily: 'Poppins',
                 color: Color(0xFFE6E6E6),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
                 height: 1.5,
               ),
             ),
@@ -64,34 +64,37 @@ class HeaderSection extends StatelessWidget {
           // Notification Icon (26. Notification from Figma)
           GestureDetector(
             onTap: onNotificationTap,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 15,
-                  height: 16,
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.notifications_outlined,
-                    color: Colors.white,
-                    size: 15,
-                  ),
-                ),
-                // Red dot indicator (Ellipse 221)
-                if (hasNotification)
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Container(
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF8282),
-                        shape: BoxShape.circle,
-                      ),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
-              ],
+                  // Red dot indicator (Ellipse 221)
+                  if (hasNotification)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFF8282),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

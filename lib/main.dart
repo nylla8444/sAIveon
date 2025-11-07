@@ -20,6 +20,7 @@ import 'pages/transaction_history_page.dart';
 import 'pages/monthly_budget_page.dart';
 import 'pages/scheduled_payments_page.dart';
 import 'pages/scheduled_payment_detail_page.dart';
+import 'pages/expenses_see_all_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -347,8 +348,12 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                     ),
                   ],
                   onSeeAllTap: () {
-                    // TODO: Navigate to all expenses page
-                    print('Expenses See All tapped');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ExpensesSeeAllPage(),
+                      ),
+                    );
                   },
                 ),
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/custom_back_button.dart';
 
 class MonthlyBudgetPage extends StatelessWidget {
   const MonthlyBudgetPage({super.key});
@@ -15,24 +16,26 @@ class MonthlyBudgetPage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Text(
-                      '< Monthly Budget',
-                      style: TextStyle(
-                        fontFamily: 'Manrope',
-                        color: Color(0xFFD6D6D6),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        height: 1.366,
-                      ),
+                  CustomBackButton(
+                    size: 40,
+                    backgroundColor: const Color(0xFF2A2A2A),
+                    iconColor: const Color(0xFFFFFFFF),
+                  ),
+                  const SizedBox(width: 15),
+                  const Text(
+                    'Monthly Budget',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Color(0xFFFFFFFF),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 25),
 
             // Progress bar section
             Padding(

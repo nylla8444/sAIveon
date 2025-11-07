@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/custom_back_button.dart';
 
 class AddScheduledPaymentPage extends StatefulWidget {
   const AddScheduledPaymentPage({super.key});
@@ -127,34 +128,19 @@ class _AddScheduledPaymentPageState extends State<AddScheduledPaymentPage> {
                 // Header with back button
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF191919),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFD6D6D6).withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Color(0xFFD6D6D6),
-                          size: 20,
-                        ),
-                      ),
+                    CustomBackButton(
+                      size: 40,
+                      backgroundColor: const Color(0xFF2A2A2A),
+                      iconColor: const Color(0xFFFFFFFF),
                     ),
                     const SizedBox(width: 15),
                     const Text(
                       'Add Scheduled Payment',
                       style: TextStyle(
-                        color: Color(0xFFD6D6D6),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Manrope',
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Poppins',
                       ),
                     ),
                   ],

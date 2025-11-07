@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'edit_bank_page.dart';
+import '../widgets/custom_back_button.dart';
 
 class BankDetailPage extends StatelessWidget {
   final String bankName;
@@ -23,30 +24,27 @@ class BankDetailPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Back button
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Row(
-                    children: const [
-                      Icon(
-                        Icons.arrow_back_ios,
-                        color: Color(0xFFD6D6D6),
-                        size: 12,
+                Row(
+                  children: [
+                    CustomBackButton(
+                      size: 40,
+                      backgroundColor: const Color(0xFF2A2A2A),
+                      iconColor: const Color(0xFFFFFFFF),
+                    ),
+                    const SizedBox(width: 15),
+                    const Text(
+                      'Balance',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
                       ),
-                      Text(
-                        ' Balance',
-                        style: TextStyle(
-                          fontFamily: 'Manrope',
-                          color: Color(0xFFD6D6D6),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          height: 1.366,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
                 // Bank name and balance card
                 Container(
@@ -89,7 +87,7 @@ class BankDetailPage extends StatelessWidget {
                               style: const TextStyle(
                                 fontFamily: 'Manrope',
                                 color: Color(0xFFD6D6D6),
-                                fontSize: 12,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 height: 1.366,
                               ),
@@ -100,7 +98,7 @@ class BankDetailPage extends StatelessWidget {
                               style: const TextStyle(
                                 fontFamily: 'Poppins',
                                 color: Color(0xFFADACAC),
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 height: 1.5,
                               ),
@@ -123,13 +121,11 @@ class BankDetailPage extends StatelessWidget {
                           );
                         },
                         child: Container(
-                          width: 18,
-                          height: 18,
-                          alignment: Alignment.center,
+                          padding: const EdgeInsets.all(8),
                           child: const Icon(
                             Icons.edit_outlined,
                             color: Color(0xFFD6D6D6),
-                            size: 16,
+                            size: 20,
                           ),
                         ),
                       ),

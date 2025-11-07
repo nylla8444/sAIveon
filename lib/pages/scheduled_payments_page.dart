@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'scheduled_payment_detail_page.dart';
 import 'add_scheduled_payment_page.dart';
+import '../widgets/custom_back_button.dart';
 
 class ScheduledPaymentsPage extends StatefulWidget {
   const ScheduledPaymentsPage({super.key});
@@ -30,28 +31,24 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
             // Header with back button
             Padding(
               padding: const EdgeInsets.fromLTRB(15, 16, 15, 0),
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.chevron_left,
-                      color: Color(0xFFD6D6D6),
-                      size: 20,
+              child: Row(
+                children: [
+                  CustomBackButton(
+                    size: 40,
+                    backgroundColor: const Color(0xFF2A2A2A),
+                    iconColor: const Color(0xFFFFFFFF),
+                  ),
+                  const SizedBox(width: 15),
+                  const Text(
+                    'Scheduled Payments',
+                    style: TextStyle(
+                      color: Color(0xFFFFFFFF),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
                     ),
-                    SizedBox(width: 5),
-                    Text(
-                      'Scheduled Payments',
-                      style: TextStyle(
-                        color: Color(0xFFD6D6D6),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Manrope',
-                        height: 1.366,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
