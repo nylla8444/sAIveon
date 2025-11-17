@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../domain/entities/transaction_entity.dart';
+import '../../../banks/domain/entities/bank_entity.dart';
 
 enum TransactionType { income, spending, transfer }
 
@@ -15,13 +18,13 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   // Form controllers
   final TextEditingController _amountController = TextEditingController();
+  int? _selectedBankId;
   String? _selectedAccount;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   String? _selectedCategory;
 
-  // Available options
-  final List<String> _accounts = ['Bank A', 'Bank B', 'Bank C', 'Bank D'];
+  // Dynamic accounts come from DB via bottom sheet stream
   final List<String> _categories = [
     'Groceries',
     'Shopping',
@@ -130,11 +133,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
                       // Save button
                       GestureDetector(
-                        onTap: () {
-                          // TODO: Save transaction
-                          print('Save transaction');
-                          Navigator.pop(context);
-                        },
+                        onTap: _onSave,
                         child: Container(
                           width: double.infinity,
                           height: 48,
@@ -388,41 +387,82 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Select Account',
-              style: TextStyle(
-                fontFamily: 'Manrope',
-                color: Color(0xFFD6D6D6),
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 20),
-            ..._accounts.map(
-              (account) => ListTile(
-                title: Text(
-                  account,
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    color: Color(0xFFD6D6D6),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+      builder: (context) {
+        final locator = ServiceProvider.of(context);
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Account',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  color: Color(0xFFD6D6D6),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
                 ),
-                onTap: () {
-                  setState(() => _selectedAccount = account);
-                  Navigator.pop(context);
-                },
               ),
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 320,
+                child: StreamBuilder<List<BankEntity>>(
+                  stream: locator.bankRepository.watchAllBanks(),
+                  builder: (context, snapshot) {
+                    final banks = snapshot.data ?? const <BankEntity>[];
+                    if (banks.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No banks found. Add one first.',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            color: Color(0xFFD6D6D6),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      itemCount: banks.length,
+                      itemBuilder: (context, index) {
+                        final bank = banks[index];
+                        return ListTile(
+                          title: Text(
+                            bank.name,
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              color: Color(0xFFD6D6D6),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Text(
+                            _formatMoney(bank.balance),
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              color: Color(0xFF9E9E9E),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _selectedBankId = bank.id;
+                              _selectedAccount = bank.name;
+                            });
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -527,5 +567,97 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _onSave() async {
+    const red = '\x1B[31m';
+    const green = '\x1B[32m';
+    const yellow = '\x1B[33m';
+    const reset = '\x1B[0m';
+
+    final raw = _amountController.text.trim();
+    final amount = double.tryParse(raw);
+
+    if (amount == null || amount <= 0) {
+      _showSnack('Please enter a valid amount');
+      return;
+    }
+    if (_selectedBankId == null) {
+      _showSnack('Please select an account');
+      return;
+    }
+    if (_selectedCategory == null) {
+      _showSnack('Please select a category');
+      return;
+    }
+
+    try {
+      final type = _selectedType == TransactionType.income
+          ? 'receive'
+          : (_selectedType == TransactionType.transfer ? 'transfer' : 'send');
+
+      // Build date from selected date/time or now
+      final dt = _selectedDate != null && _selectedTime != null
+          ? DateTime(
+              _selectedDate!.year,
+              _selectedDate!.month,
+              _selectedDate!.day,
+              _selectedTime!.hour,
+              _selectedTime!.minute,
+            )
+          : DateTime.now();
+
+      print(
+        '🟨 ${yellow}[DB] ADD_TRANSACTION_REQUEST type=$type amount=$amount category=$_selectedCategory${reset}',
+      );
+
+      final locator = ServiceProvider.of(context);
+      await locator.transactionRepository.addTransaction(
+        TransactionEntity(
+          id: null,
+          type: type,
+          amount: amount,
+          name: _selectedCategory!,
+          iconPath: 'default',
+          status: 'completed',
+          statusColor: 0xFF00FF00,
+          bankId: _selectedBankId,
+          date: dt,
+          serverId: null,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          isDeleted: false,
+        ),
+      );
+
+      print('🟩 ${green}[DB] ADD_TRANSACTION_SUCCESS${reset}');
+      if (mounted) Navigator.pop(context);
+    } catch (e, st) {
+      print('🟥 ${red}[DB] ADD_TRANSACTION_ERROR: $e${reset}');
+      print('🟥 ${red}$st${reset}');
+      _showSnack('Failed to save transaction: $e');
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _formatMoney(double value) {
+    final s = value.toStringAsFixed(2);
+    // Simple thousands separator
+    final parts = s.split('.');
+    final whole = parts[0];
+    final decimals = parts[1];
+    final chars = whole.split('').reversed.toList();
+    final out = <String>[];
+    for (int i = 0; i < chars.length; i++) {
+      if (i > 0 && i % 3 == 0) out.add(',');
+      out.add(chars[i]);
+    }
+    final withCommas = out.reversed.join();
+    return ' \$${withCommas}.$decimals'.replaceFirst('\u0000', '');
   }
 }

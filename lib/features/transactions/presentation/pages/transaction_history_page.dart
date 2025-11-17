@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/index.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../domain/entities/transaction_entity.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
   const TransactionHistoryPage({super.key});
@@ -9,157 +11,32 @@ class TransactionHistoryPage extends StatefulWidget {
 }
 
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
-  String _selectedFilter = 'All'; // All, Spending, Income
+  String _selectedFilter = 'All';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  int? _selectedBankId;
+  String? _selectedBankName;
+  DateTimeRange? _selectedRange;
+  final ScrollController _scrollController = ScrollController();
+  int _loadedCount = 30;
+  final int _pageSize = 30;
 
-  // All transactions data
-  final List<Map<String, dynamic>> _allTransactions = [
-    // 11 October 2025
-    {
-      'date': '11 October 2025',
-      'isSpecial': true,
-      'transactions': [
-        {
-          'category': 'Bank Transfer',
-          'description': 'Bank A',
-          'time': '06:40PM',
-          'amount': '+\$2',
-          'type': 'income',
-          'icon': Icons.account_balance,
-        },
-        {
-          'category': 'Transportation',
-          'description': 'Bank A',
-          'time': '06:40PM',
-          'amount': '-\$2',
-          'type': 'spending',
-          'icon': Icons.directions_car,
-        },
-      ],
-    },
-    // 10 October 2025
-    {
-      'date': '10 October 2025',
-      'isSpecial': false,
-      'transactions': [
-        {
-          'category': 'Taxi',
-          'description': 'Uber',
-          'time': '06:40PM',
-          'amount': '-\$15',
-          'type': 'spending',
-          'icon': Icons.local_taxi,
-        },
-        {
-          'category': 'Transfer',
-          'description': 'Bank B',
-          'time': '06:40PM',
-          'amount': '+\$2',
-          'type': 'income',
-          'icon': Icons.swap_horiz,
-        },
-        {
-          'category': 'Food',
-          'description': 'Starbucks',
-          'time': '06:40PM',
-          'amount': '-\$17',
-          'type': 'spending',
-          'icon': Icons.restaurant,
-        },
-      ],
-    },
-    // 09 October 2025
-    {
-      'date': '09 October 2025',
-      'isSpecial': false,
-      'transactions': [
-        {
-          'category': 'Taxi',
-          'description': 'Uber',
-          'time': '06:40PM',
-          'amount': '-\$15',
-          'type': 'spending',
-          'icon': Icons.local_taxi,
-        },
-      ],
-    },
-    // 08 October 2025
-    {
-      'date': '08 October 2025',
-      'isSpecial': false,
-      'transactions': [
-        {
-          'category': 'Taxi',
-          'description': 'Uber',
-          'time': '06:40PM',
-          'amount': '-\$15',
-          'type': 'spending',
-          'icon': Icons.local_taxi,
-        },
-        {
-          'category': 'Transfer',
-          'description': 'Bank B',
-          'time': '06:40PM',
-          'amount': '+\$2',
-          'type': 'income',
-          'icon': Icons.swap_horiz,
-        },
-        {
-          'category': 'Food',
-          'description': 'Starbucks',
-          'time': '06:40PM',
-          'amount': '-\$17',
-          'type': 'spending',
-          'icon': Icons.restaurant,
-        },
-      ],
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        setState(() => _loadedCount += _pageSize);
+      }
+    });
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  List<Map<String, dynamic>> _getFilteredTransactions() {
-    // First filter by type (All/Spending/Income)
-    List<Map<String, dynamic>> filtered = _allTransactions
-        .map((dateGroup) {
-          List<dynamic> transactions = List.from(dateGroup['transactions']);
-
-          // Filter by type
-          if (_selectedFilter == 'Spending') {
-            transactions = transactions
-                .where((t) => t['type'] == 'spending')
-                .toList();
-          } else if (_selectedFilter == 'Income') {
-            transactions = transactions
-                .where((t) => t['type'] == 'income')
-                .toList();
-          }
-
-          // Filter by search query
-          if (_searchQuery.isNotEmpty) {
-            transactions = transactions.where((t) {
-              final category = t['category'].toString().toLowerCase();
-              final description = t['description'].toString().toLowerCase();
-              final query = _searchQuery.toLowerCase();
-              return category.contains(query) || description.contains(query);
-            }).toList();
-          }
-
-          return {
-            'date': dateGroup['date'],
-            'isSpecial': dateGroup['isSpecial'],
-            'transactions': transactions,
-          };
-        })
-        .where((dateGroup) => dateGroup['transactions'].isNotEmpty)
-        .toList();
-
-    return filtered;
   }
 
   @override
@@ -172,7 +49,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back button
               Row(
                 children: [
                   CustomBackButton(
@@ -192,84 +68,74 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
-
-              // Search bar
-              Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF191919),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.search,
-                      color: Color(0xFF949494),
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (value) {
-                          setState(() {
-                            _searchQuery = value;
-                          });
-                        },
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          color: Color(0xFFD6D6D6),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          height: 1.5,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Super AI Search',
-                          hintStyle: TextStyle(
-                            fontFamily: 'Poppins',
-                            color: Color(0xFF949494),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            height: 1.5,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
+              _buildSearchBar(),
               const SizedBox(height: 18),
-
-              // Filter tabs
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildFilterTab('All', 29),
-                  const SizedBox(width: 31),
-                  _buildFilterTab('Spending', 74),
-                  const SizedBox(width: 31),
-                  _buildFilterTab('Income', 59),
-                ],
-              ),
-
+              _buildFilterTabs(),
               const SizedBox(height: 19),
-
-              // Transaction list
+              _buildBankDateFilters(),
+              const SizedBox(height: 12),
               Expanded(child: _buildFilteredTransactionList()),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF191919),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: Color(0xFF949494), size: 16),
+          const SizedBox(width: 6),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _searchQuery = value),
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                color: Color(0xFFD6D6D6),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+              decoration: const InputDecoration(
+                hintText: 'Search transactions',
+                hintStyle: TextStyle(
+                  fontFamily: 'Poppins',
+                  color: Color(0xFF949494),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterTabs() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildFilterTab('All', 29),
+        const SizedBox(width: 31),
+        _buildFilterTab('Spending', 74),
+        const SizedBox(width: 31),
+        _buildFilterTab('Income', 59),
+      ],
     );
   }
 
@@ -303,58 +169,405 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   }
 
   Widget _buildFilteredTransactionList() {
-    final filteredTransactions = _getFilteredTransactions();
+    final locator = ServiceProvider.of(context);
+    return StreamBuilder<List<TransactionEntity>>(
+      stream: locator.transactionRepository.watchAllTransactions(),
+      builder: (context, snapshot) {
+        final items = snapshot.data ?? const <TransactionEntity>[];
+        return StreamBuilder(
+          stream: locator.bankRepository.watchAllBanks(),
+          builder: (context, bankSnap) {
+            final banks = bankSnap.data ?? const [];
+            final bankNames = {
+              for (final b in banks)
+                if (b.id != null) b.id!: b.name,
+            };
 
-    if (filteredTransactions.isEmpty) {
-      return const Center(
-        child: Text(
-          'No transactions found',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            color: Color(0xFF949494),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
-    }
+            Iterable<TransactionEntity> filtered = items.where(
+              (t) => !t.isDeleted,
+            );
+            if (_selectedFilter == 'Spending')
+              filtered = filtered.where((t) => t.type == 'send');
+            if (_selectedFilter == 'Income')
+              filtered = filtered.where((t) => t.type == 'receive');
+            if (_selectedBankId != null)
+              filtered = filtered.where((t) => t.bankId == _selectedBankId);
+            if (_selectedRange != null) {
+              final start = DateTime(
+                _selectedRange!.start.year,
+                _selectedRange!.start.month,
+                _selectedRange!.start.day,
+              );
+              final end = DateTime(
+                _selectedRange!.end.year,
+                _selectedRange!.end.month,
+                _selectedRange!.end.day,
+                23,
+                59,
+                59,
+                999,
+              );
+              filtered = filtered.where(
+                (t) => !t.date.isBefore(start) && !t.date.isAfter(end),
+              );
+            }
+            if (_searchQuery.isNotEmpty) {
+              final q = _searchQuery.toLowerCase();
+              filtered = filtered.where((t) {
+                final bankName = t.bankId != null
+                    ? (bankNames[t.bankId!] ?? '')
+                    : '';
+                return t.name.toLowerCase().contains(q) ||
+                    t.type.toLowerCase().contains(q) ||
+                    bankName.toLowerCase().contains(q);
+              });
+            }
 
-    return ListView.builder(
-      itemCount: filteredTransactions.length,
-      itemBuilder: (context, index) {
-        final dateGroup = filteredTransactions[index];
-        final date = dateGroup['date'] as String;
-        final transactions = (dateGroup['transactions'] as List)
-            .cast<Map<String, dynamic>>();
-
-        // Convert to _TransactionData objects
-        final transactionData = transactions
-            .map(
-              (t) => _TransactionData(
-                category: t['category'] as String,
-                description: t['description'] as String,
-                time: t['time'] as String,
-                amount: t['amount'] as String,
-                isPositive: (t['amount'] as String).startsWith('+'),
-                icon: t['icon'] as IconData,
-              ),
-            )
-            .toList();
-
-        return Column(
-          children: [
-            if (index == 0)
-              // First item - special rounded card
-              _buildSpecialTransactionCard(date, transactionData)
-            else
-              // Regular transaction section
-              _buildTransactionSection(date, transactionData),
-            if (index < filteredTransactions.length - 1)
-              const SizedBox(height: 14),
-          ],
+            final sorted = filtered.toList()
+              ..sort((a, b) => b.date.compareTo(a.date));
+            final paged = sorted.take(_loadedCount).toList();
+            final grouped = <String, List<TransactionEntity>>{};
+            for (final t in paged) {
+              final key = _formatDate(t.date);
+              grouped.putIfAbsent(key, () => []).add(t);
+            }
+            if (grouped.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No transactions found',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Color(0xFF949494),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }
+            final groups = grouped.entries.toList();
+            final moreAvailable = paged.length < sorted.length;
+            return ListView.builder(
+              controller: _scrollController,
+              itemCount: groups.length + (moreAvailable ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (moreAvailable && index == groups.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  );
+                }
+                final entry = groups[index];
+                final date = entry.key;
+                final txs = entry.value;
+                final data = txs.map((t) {
+                  final isPositive = t.type == 'receive';
+                  final sign = isPositive ? '+' : '-';
+                  final amountStr = '$sign\$${t.amount.toStringAsFixed(0)}';
+                  final bankName = t.bankId != null
+                      ? (bankNames[t.bankId!] ?? '-')
+                      : '-';
+                  return _TransactionData(
+                    id: t.id!,
+                    category: t.name,
+                    description: bankName,
+                    time: _formatTime(t.date),
+                    amount: amountStr,
+                    isPositive: isPositive,
+                    icon: _iconForType(t.type),
+                    bankId: t.bankId,
+                    type: t.type,
+                    rawAmount: t.amount,
+                  );
+                }).toList();
+                return Column(
+                  children: [
+                    if (index == 0)
+                      _buildSpecialTransactionCard(date, data)
+                    else
+                      _buildTransactionSection(date, data),
+                    if (index < groups.length - 1) const SizedBox(height: 14),
+                  ],
+                );
+              },
+            );
+          },
         );
       },
     );
+  }
+
+  String _formatTime(DateTime dt) {
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+    return '${hour.toString().padLeft(2, '0')}:$minute$ampm';
+  }
+
+  String _formatDate(DateTime dt) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  IconData _iconForType(String type) {
+    switch (type) {
+      case 'receive':
+        return Icons.arrow_downward;
+      case 'transfer':
+        return Icons.swap_horiz;
+      default:
+        return Icons.arrow_upward;
+    }
+  }
+
+  Widget _buildBankDateFilters() {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: _showBankPicker,
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF191919),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.08),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.account_balance,
+                    color: Color(0xFFD6D6D6),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _selectedBankName ?? 'All Banks',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        color: Color(0xFFD6D6D6),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (_selectedBankId != null)
+                    GestureDetector(
+                      onTap: () => setState(() {
+                        _selectedBankId = null;
+                        _selectedBankName = null;
+                      }),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Icon(
+                          Icons.clear,
+                          color: Colors.redAccent,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFFD6D6D6),
+                    size: 18,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: GestureDetector(
+            onTap: _showDateRange,
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF191919),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.08),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.date_range,
+                    color: Color(0xFFD6D6D6),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _selectedRange == null
+                          ? 'Any time'
+                          : '${_selectedRange!.start.month}/${_selectedRange!.start.day} - ${_selectedRange!.end.month}/${_selectedRange!.end.day}',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        color: Color(0xFFD6D6D6),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (_selectedRange != null)
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedRange = null),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Icon(
+                          Icons.clear,
+                          color: Colors.redAccent,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFFD6D6D6),
+                    size: 18,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showBankPicker() {
+    final locator = ServiceProvider.of(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF101010),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Filter by Bank',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  color: Color(0xFFD6D6D6),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ListTile(
+                title: const Text(
+                  'All Banks',
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    color: Color(0xFFD6D6D6),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedBankId = null;
+                    _selectedBankName = null;
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              const Divider(color: Color(0xFF4F4F4F)),
+              SizedBox(
+                height: 320,
+                child: StreamBuilder(
+                  stream: locator.bankRepository.watchAllBanks(),
+                  builder: (context, snapshot) {
+                    final banks = snapshot.data ?? const [];
+                    return ListView.builder(
+                      itemCount: banks.length,
+                      itemBuilder: (context, index) {
+                        final b = banks[index];
+                        return ListTile(
+                          title: Text(
+                            b.name,
+                            style: const TextStyle(
+                              fontFamily: 'Manrope',
+                              color: Color(0xFFD6D6D6),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _selectedBankId = b.id;
+                              _selectedBankName = b.name;
+                            });
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
+      initialDateRange: _selectedRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFFBA9BFF),
+              onPrimary: Color(0xFF000000),
+              surface: Color(0xFF101010),
+              onSurface: Color(0xFFD6D6D6),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) setState(() => _selectedRange = picked);
   }
 
   Widget _buildSpecialTransactionCard(
@@ -370,7 +583,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       ),
       child: Column(
         children: [
-          // Date header
           Row(
             children: [
               Text(
@@ -389,10 +601,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          // Transactions with dividers
           ...transactions.asMap().entries.map((entry) {
             final index = entry.key;
             final transaction = entry.value;
@@ -429,7 +638,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   ) {
     return Row(
       children: [
-        // Icon
         Container(
           width: 30,
           height: 30,
@@ -439,10 +647,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           ),
           child: Icon(icon, color: Colors.white, size: 16),
         ),
-
         const SizedBox(width: 11),
-
-        // Category and description
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,8 +676,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             ],
           ),
         ),
-
-        // Amount and time
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -523,7 +726,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Date header with line
           Row(
             children: [
               Text(
@@ -542,10 +744,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               ),
             ],
           ),
-
           const SizedBox(height: 22),
-
-          // Transactions
           ...transactions.asMap().entries.map((entry) {
             final index = entry.key;
             final transaction = entry.value;
@@ -570,7 +769,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Widget _buildTransactionItem(_TransactionData transaction) {
     return Row(
       children: [
-        // Icon
         Container(
           width: 40,
           height: 40,
@@ -580,10 +778,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           ),
           child: Icon(transaction.icon, color: Colors.white, size: 20),
         ),
-
         const SizedBox(width: 11),
-
-        // Category and description
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -612,8 +807,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             ],
           ),
         ),
-
-        // Time and amount
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -640,27 +833,121 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 height: 1.5,
               ),
             ),
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: () => _confirmDelete(transaction),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: Colors.red.withOpacity(0.4),
+                    width: 1,
+                  ),
+                ),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Colors.redAccent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ],
     );
   }
+
+  void _confirmDelete(_TransactionData data) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF191919),
+        title: const Text(
+          'Delete Transaction',
+          style: TextStyle(color: Color(0xFFD6D6D6), fontFamily: 'Poppins'),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${data.category}" (${data.amount})?',
+          style: const TextStyle(
+            color: Color(0xFF9E9E9E),
+            fontFamily: 'Poppins',
+            fontSize: 13,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteTransaction(data);
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteTransaction(_TransactionData data) async {
+    const red = '\x1B[31m';
+    const green = '\x1B[32m';
+    const reset = '\x1B[0m';
+    try {
+      final locator = ServiceProvider.of(context);
+      print('🟨 ${red}[DB] DELETE_TRANSACTION_REQUEST id=${data.id}${reset}');
+      await locator.transactionRepository.deleteTransaction(data.id);
+      print('🟩 ${green}[DB] DELETE_TRANSACTION_SUCCESS id=${data.id}${reset}');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Transaction deleted')));
+      }
+    } catch (e, st) {
+      print('🟥 ${red}[DB] DELETE_TRANSACTION_ERROR id=${data.id}: $e${reset}');
+      print('🟥 ${red}$st${reset}');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      }
+    }
+  }
 }
 
 class _TransactionData {
+  final int id;
   final String category;
   final String description;
   final String time;
   final String amount;
   final bool isPositive;
   final IconData icon;
+  final int? bankId;
+  final String type;
+  final double rawAmount;
 
   _TransactionData({
+    required this.id,
     required this.category,
     required this.description,
     required this.time,
     required this.amount,
     required this.isPositive,
     required this.icon,
+    required this.bankId,
+    required this.type,
+    required this.rawAmount,
   });
 }

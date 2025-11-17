@@ -5,7 +5,9 @@ import 'core/di/service_locator.dart';
 import 'core/config/env.dart';
 import 'features/banks/banks.dart';
 import 'features/banks/domain/entities/bank_entity.dart';
+import 'features/transactions/domain/entities/transaction_entity.dart';
 import 'features/transactions/transactions.dart';
+// TransactionHistorySection types are exported via the transactions barrel
 import 'features/budgets/budgets.dart';
 import 'features/expenses/expenses.dart';
 import 'features/scheduled_payments/scheduled_payments.dart';
@@ -121,6 +123,24 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
     final whole = value.abs().toStringAsFixed(0);
     final s = '\$' + whole;
     return value < 0 ? '-' + s : s;
+  }
+
+  String _formatTime(DateTime date) {
+    final h = date.hour > 12
+        ? date.hour - 12
+        : (date.hour == 0 ? 12 : date.hour);
+    final m = date.minute.toString().padLeft(2, '0');
+    final p = date.hour >= 12 ? 'PM' : 'AM';
+    return '$h:$m$p';
+  }
+
+  IconData _iconForTransaction(String iconPath) {
+    // Simple mapping; expand as needed
+    if (iconPath.contains('wallet')) return Icons.account_balance_wallet;
+    if (iconPath.contains('car')) return Icons.directions_car;
+    if (iconPath.contains('cart')) return Icons.shopping_cart;
+    if (iconPath.contains('payment')) return Icons.payments;
+    return Icons.swap_horiz;
   }
 
   Widget _getCurrentPage() {
@@ -260,49 +280,48 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
 
                 // Transaction History - Using modular component
                 const SizedBox(height: 30),
-                TransactionHistorySection(
-                  transactions: [
-                    TransactionData(
-                      title: 'Bank Transfer',
-                      subtitle: 'Bank A',
-                      amount: '+\$2',
-                      time: '06:40PM',
-                      icon: Icons.account_balance_wallet,
-                      onTap: () {
-                        print('Bank Transfer tapped');
+                Builder(
+                  builder: (context) {
+                    final locator = ServiceProvider.of(context);
+                    return StreamBuilder<List<TransactionEntity>>(
+                      stream: locator.transactionRepository
+                          .watchAllTransactions(),
+                      builder: (context, snapshot) {
+                        final txns =
+                            snapshot.data ?? const <TransactionEntity>[];
+                        // Take last 4 transactions for Home preview
+                        final recent = txns.take(4).map((t) {
+                          final isIncome = t.type == 'receive';
+                          final sign = isIncome ? '+' : '-';
+                          final amt = _formatCurrency(t.amount);
+                          final time = _formatTime(t.date);
+                          return TransactionData(
+                            id: t.id!,
+                            title: t.name,
+                            subtitle: 'Transaction',
+                            amount: '$sign$amt',
+                            time: time,
+                            date: t.date,
+                            type: t.type,
+                            rawAmount: t.amount,
+                            bankId: t.bankId,
+                            icon: _iconForTransaction(t.iconPath),
+                          );
+                        }).toList();
+
+                        return TransactionHistorySection(
+                          transactions: recent,
+                          onSeeAllTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const TransactionHistoryPage(),
+                              ),
+                            );
+                          },
+                        );
                       },
-                    ),
-                    TransactionData(
-                      title: 'Transportation',
-                      subtitle: 'Bank A',
-                      amount: '-\$2',
-                      time: '06:40PM',
-                      icon: Icons.directions_car,
-                      onTap: () {
-                        print('Transportation tapped');
-                      },
-                    ),
-                    TransactionData(
-                      title: 'Groceries',
-                      subtitle: 'Bank B',
-                      amount: '-\$45',
-                      time: '04:20PM',
-                      icon: Icons.shopping_cart,
-                    ),
-                    TransactionData(
-                      title: 'Salary',
-                      subtitle: 'Bank A',
-                      amount: '+\$2500',
-                      time: '09:00AM',
-                      icon: Icons.payments,
-                    ),
-                  ],
-                  onSeeAllTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const TransactionHistoryPage(),
-                      ),
                     );
                   },
                 ),

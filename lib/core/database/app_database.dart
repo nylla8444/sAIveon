@@ -272,6 +272,12 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<Transaction?> getTransactionById(int id) {
+    return (select(
+      transactions,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
   // ============================================================================
   // Query Methods - Budgets
   // ============================================================================
