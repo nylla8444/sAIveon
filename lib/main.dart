@@ -1,26 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'widgets/header_section.dart';
-import 'widgets/balance_section.dart';
-import 'widgets/achievement_card_section.dart';
-import 'widgets/banks_horizontal_scroll_section.dart';
-import 'widgets/transaction_history_section.dart';
-import 'widgets/monthly_budget_section.dart';
-import 'widgets/spending_line_chart_section.dart';
-import 'widgets/expenses_horizontal_scroll_section.dart';
-import 'widgets/scheduled_payments_section.dart';
-import 'pages/statistics_page.dart';
-import 'pages/ai_page.dart';
-import 'pages/more_page.dart';
-import 'pages/add_transaction_page.dart';
-import 'pages/add_bank_page.dart';
-import 'pages/notifications_page.dart';
-import 'pages/bank_detail_page.dart';
-import 'pages/transaction_history_page.dart';
-import 'pages/monthly_budget_page.dart';
-import 'pages/scheduled_payments_page.dart';
-import 'pages/scheduled_payment_detail_page.dart';
-import 'pages/expenses_see_all_page.dart';
+import 'core/widgets/index.dart';
+import 'features/banks/banks.dart';
+import 'features/transactions/transactions.dart';
+import 'features/budgets/budgets.dart';
+import 'features/expenses/expenses.dart';
+import 'features/scheduled_payments/scheduled_payments.dart';
+import 'features/statistics/statistics.dart';
+import 'features/home/home.dart';
+import 'features/settings/settings.dart';
+import 'features/notifications/notifications.dart';
 
 void main() {
   runApp(const MyApp());
