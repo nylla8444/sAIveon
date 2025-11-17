@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../banks/domain/entities/bank_entity.dart';
 
 class AddBankPage extends StatefulWidget {
   const AddBankPage({super.key});
@@ -101,13 +103,7 @@ class _AddBankPageState extends State<AddBankPage> {
 
                       // Save button
                       GestureDetector(
-                        onTap: () {
-                          // TODO: Save the bank data
-                          print(
-                            'Save bank: ${_nameController.text}, ${_amountController.text}',
-                          );
-                          Navigator.pop(context);
-                        },
+                        onTap: _onSave,
                         child: Container(
                           width: double.infinity,
                           height: 48,
@@ -238,5 +234,61 @@ class _AddBankPageState extends State<AddBankPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _onSave() async {
+    final name = _nameController.text.trim();
+    final raw = _amountController.text.trim();
+    if (name.isEmpty) {
+      _showSnack('Please enter a bank/wallet name');
+      return;
+    }
+    final amount = double.tryParse(raw);
+    if (amount == null) {
+      _showSnack('Please enter a valid amount');
+      return;
+    }
+
+    // ANSI colors for terminal logs
+    const red = '\x1B[31m';
+    const green = '\x1B[32m';
+    const yellow = '\x1B[33m';
+    const reset = '\x1B[0m';
+
+    try {
+      print(
+        '${yellow}[DB] ADD_BANK_REQUEST name="$name" amount=$amount${reset}',
+      );
+
+      final locator = ServiceProvider.of(context);
+      await locator.bankRepository.addBank(
+        BankEntity(
+          id: null,
+          name: name,
+          // Provide a non-empty placeholder to satisfy DB constraint (min length 1)
+          accountNumber: '0000',
+          balance: amount.toDouble(),
+          color: '#A882FF',
+          logoPath: null,
+          serverId: null,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          isDeleted: false,
+        ),
+      );
+
+      print('${green}[DB] ADD_BANK_SUCCESS name="$name"${reset}');
+      Navigator.pop(context);
+    } catch (e, st) {
+      print('${red}[DB] ADD_BANK_ERROR: $e${reset}');
+      print('${red}$st${reset}');
+      _showSnack('Failed to save bank: $e');
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

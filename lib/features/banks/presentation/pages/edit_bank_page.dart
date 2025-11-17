@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../banks/domain/entities/bank_entity.dart';
 
 class EditBankPage extends StatefulWidget {
+  final int? bankId;
   final String bankName;
   final String balance;
 
   const EditBankPage({
     super.key,
+    this.bankId,
     required this.bankName,
     required this.balance,
   });
@@ -18,15 +22,38 @@ class EditBankPage extends StatefulWidget {
 class _EditBankPageState extends State<EditBankPage> {
   late TextEditingController _nameController;
   late TextEditingController _balanceController;
+  // Loaded entity to preserve non-edited fields
+  dynamic _loadedBank;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.bankName);
-    // Remove the $ symbol from balance for editing
     _balanceController = TextEditingController(
       text: widget.balance.replaceAll('\$', ''),
     );
+
+    // Load latest entity if id is provided
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (widget.bankId != null) {
+        try {
+          // Access repo via ServiceProvider
+          final locator = ServiceProvider.of(context);
+          final entity = await locator.bankRepository.getBankById(
+            widget.bankId!,
+          );
+          if (entity != null && mounted) {
+            setState(() {
+              _loadedBank = entity;
+              _nameController.text = entity.name;
+              _balanceController.text = entity.balance.toStringAsFixed(0);
+            });
+          }
+        } catch (e) {
+          debugPrint('EditBank load error: $e');
+        }
+      }
+    });
   }
 
   @override
@@ -118,13 +145,8 @@ class _EditBankPageState extends State<EditBankPage> {
 
                       // Save button
                       GestureDetector(
-                        onTap: () {
-                          // TODO: Save the updated bank data
-                          print(
-                            'Save bank: ${_nameController.text}, \$${_balanceController.text}',
-                          );
-                          Navigator.pop(context);
-                        },
+                        onTap: _onSave,
+
                         child: Container(
                           width: double.infinity,
                           height: 48,
@@ -279,5 +301,81 @@ class _EditBankPageState extends State<EditBankPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _onSave() async {
+    // ANSI + emoji tags for visibility in VS Code terminal
+    const red = '\x1B[31m';
+    const green = '\x1B[32m';
+    const yellow = '\x1B[33m';
+    const reset = '\x1B[0m';
+
+    final name = _nameController.text.trim();
+    final raw = _balanceController.text.trim();
+    final amount = double.tryParse(raw);
+
+    if (name.isEmpty) {
+      _showSnack('Please enter a bank/wallet name');
+      return;
+    }
+    if (amount == null) {
+      _showSnack('Please enter a valid amount');
+      return;
+    }
+
+    try {
+      final locator = ServiceProvider.of(context);
+      final id = widget.bankId;
+
+      print(
+        '🟨 ${yellow}[DB] UPDATE_BANK_REQUEST id=$id name="$name" amount=$amount${reset}',
+      );
+
+      if (id == null) {
+        await locator.bankRepository.addBank(
+          BankEntity(
+            id: null,
+            name: name,
+            accountNumber:
+                (_loadedBank as BankEntity?)?.accountNumber ?? '0000',
+            balance: amount.toDouble(),
+            color: (_loadedBank as BankEntity?)?.color ?? '#A882FF',
+            logoPath: (_loadedBank as BankEntity?)?.logoPath,
+            serverId: (_loadedBank as BankEntity?)?.serverId,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            isDeleted: false,
+          ),
+        );
+      } else {
+        final base = _loadedBank as BankEntity?;
+        final updated = BankEntity(
+          id: id,
+          name: name,
+          accountNumber: base?.accountNumber ?? '0000',
+          balance: amount.toDouble(),
+          color: base?.color ?? '#A882FF',
+          logoPath: base?.logoPath,
+          serverId: base?.serverId,
+          createdAt: base?.createdAt ?? DateTime.now(),
+          updatedAt: DateTime.now(),
+          isDeleted: base?.isDeleted ?? false,
+        );
+        await locator.bankRepository.updateBank(updated);
+      }
+
+      print('🟩 ${green}[DB] UPDATE_BANK_SUCCESS id=${widget.bankId}${reset}');
+      if (mounted) Navigator.pop(context);
+    } catch (e, st) {
+      print('🟥 ${red}[DB] UPDATE_BANK_ERROR: $e${reset}');
+      print('🟥 ${red}$st${reset}');
+      _showSnack('Failed to save changes: $e');
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

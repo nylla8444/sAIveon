@@ -4,6 +4,7 @@ import 'core/widgets/index.dart';
 import 'core/di/service_locator.dart';
 import 'core/config/env.dart';
 import 'features/banks/banks.dart';
+import 'features/banks/domain/entities/bank_entity.dart';
 import 'features/transactions/transactions.dart';
 import 'features/budgets/budgets.dart';
 import 'features/expenses/expenses.dart';
@@ -116,6 +117,12 @@ class FinanceHomePage extends StatefulWidget {
 class _FinanceHomePageState extends State<FinanceHomePage> {
   int _selectedIndex = 0;
 
+  String _formatCurrency(double value) {
+    final whole = value.abs().toStringAsFixed(0);
+    final s = '\$' + whole;
+    return value < 0 ? '-' + s : s;
+  }
+
   Widget _getCurrentPage() {
     switch (_selectedIndex) {
       case 0:
@@ -161,7 +168,24 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
 
                 // Balance Section - Using modular BalanceSection widget
                 const SizedBox(height: 20),
-                const BalanceSection(balance: '\$888.00'),
+                // Total balance from all banks
+                Builder(
+                  builder: (context) {
+                    final locator = ServiceProvider.of(context);
+                    return StreamBuilder<List<BankEntity>>(
+                      stream: locator.bankRepository.watchAllBanks(),
+                      builder: (context, snapshot) {
+                        final banks = snapshot.data ?? const <BankEntity>[];
+                        final total = banks.fold<double>(
+                          0,
+                          (sum, b) => sum + (b.balance),
+                        );
+                        final text = _formatCurrency(total);
+                        return BalanceSection(balance: text);
+                      },
+                    );
+                  },
+                ),
 
                 // Achievement Card - Using modular AchievementCardSection with donut chart
                 const SizedBox(height: 20),
@@ -178,90 +202,58 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
 
                 // Banks/Wallets Section - Using modular component
                 const SizedBox(height: 30),
-                BanksHorizontalScrollSection(
-                  banks: [
-                    BankCardData(
-                      name: 'Bank A',
-                      amount: '\$120',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BankDetailPage(
-                              bankName: 'Bank A',
-                              balance: '\$120',
-                            ),
-                          ),
+                Builder(
+                  builder: (context) {
+                    final locator = ServiceProvider.of(context);
+                    return StreamBuilder<List<BankEntity>>(
+                      stream: locator.bankRepository.watchAllBanks(),
+                      builder: (context, snapshot) {
+                        final banks = snapshot.data ?? const <BankEntity>[];
+                        final items = banks.map((b) {
+                          final amount = _formatCurrency(b.balance);
+                          return BankCardData(
+                            name: b.name,
+                            amount: amount,
+                            icon: Icons.account_balance,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BankDetailPage(
+                                    bankId: b.id!,
+                                    bankName: b.name,
+                                    balance: amount,
+                                  ),
+                                ),
+                              );
+                            },
+                            onArrowTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BankDetailPage(
+                                    bankId: b.id!,
+                                    bankName: b.name,
+                                    balance: amount,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }).toList();
+
+                        return BanksHorizontalScrollSection(
+                          banks: items,
+                          onAddBank: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AddBankPage(),
+                              ),
+                            );
+                          },
                         );
                       },
-                      onArrowTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BankDetailPage(
-                              bankName: 'Bank A',
-                              balance: '\$120',
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    BankCardData(
-                      name: 'Bank B',
-                      amount: '\$440',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BankDetailPage(
-                              bankName: 'Bank B',
-                              balance: '\$440',
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    BankCardData(
-                      name: 'Bank C',
-                      amount: '\$154',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BankDetailPage(
-                              bankName: 'Bank C',
-                              balance: '\$154',
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    BankCardData(
-                      name: 'Bank D',
-                      amount: '\$174',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BankDetailPage(
-                              bankName: 'Bank D',
-                              balance: '\$174',
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                  onAddBank: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddBankPage(),
-                      ),
                     );
                   },
                 ),

@@ -3,11 +3,13 @@ import 'edit_bank_page.dart';
 import '../../../../core/widgets/index.dart';
 
 class BankDetailPage extends StatelessWidget {
+  final int? bankId;
   final String bankName;
   final String balance;
 
   const BankDetailPage({
     super.key,
+    this.bankId,
     required this.bankName,
     required this.balance,
   });
@@ -114,6 +116,7 @@ class BankDetailPage extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => EditBankPage(
+                                bankId: bankId,
                                 bankName: bankName,
                                 balance: balance,
                               ),
