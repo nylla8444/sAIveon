@@ -28,6 +28,12 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Prefer 64-bit ABIs and supported 32-bit ARM. x86 (32-bit) is not supported
+        // by sqlite3_flutter_libs and many plugins anymore.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     buildTypes {

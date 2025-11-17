@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'core/widgets/index.dart';
+import 'core/di/service_locator.dart';
+import 'core/config/env.dart';
 import 'features/banks/banks.dart';
 import 'features/transactions/transactions.dart';
 import 'features/budgets/budgets.dart';
@@ -12,28 +14,94 @@ import 'features/settings/settings.dart';
 import 'features/notifications/notifications.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ServiceLocator? _serviceLocator;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    print('🔵 START: Initializing services...');
+    try {
+      print('🔵 Loading environment variables...');
+      await Env.load();
+      print('🔵 Environment loaded');
+
+      final serviceLocator = ServiceLocator();
+      print('🔵 ServiceLocator created');
+
+      await serviceLocator.initialize();
+      print('🔵 ServiceLocator initialized successfully');
+
+      if (mounted) {
+        setState(() {
+          _serviceLocator = serviceLocator;
+          _isInitialized = true;
+        });
+        print('🟢 COMPLETE: Services ready!');
+      }
+    } catch (e, stackTrace) {
+      print('🔴 ERROR during initialization: $e');
+      print('Stack trace: $stackTrace');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Finance App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF050505),
-        fontFamily: 'Manrope',
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFFA882FF),
-          secondary: const Color(0xFFBA9BFF),
-          surface: const Color(0xFF101010),
+    if (!_isInitialized || _serviceLocator == null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          backgroundColor: const Color(0xFF050505),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: const Color(0xFFA882FF)),
+                const SizedBox(height: 16),
+                Text(
+                  'Initializing...',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
         ),
+      );
+    }
+
+    return ServiceProvider(
+      serviceLocator: _serviceLocator!,
+      child: MaterialApp(
+        title: 'Finance App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color(0xFF050505),
+          fontFamily: 'Manrope',
+          colorScheme: ColorScheme.dark(
+            primary: const Color(0xFFA882FF),
+            secondary: const Color(0xFFBA9BFF),
+            surface: const Color(0xFF101010),
+          ),
+        ),
+        home: const FinanceHomePage(),
       ),
-      home: const FinanceHomePage(),
     );
   }
 }
