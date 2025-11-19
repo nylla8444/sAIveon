@@ -42,13 +42,18 @@ class Expenses extends Table {
 class Transactions extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get type =>
-      text().withLength(min: 1, max: 20)(); // 'send' or 'receive'
+      text().withLength(min: 1, max: 20)(); // 'send', 'receive', or 'transfer'
   RealColumn get amount => real()();
   TextColumn get name => text().withLength(min: 1, max: 100)();
   TextColumn get iconPath => text()();
   TextColumn get status => text().withLength(min: 1, max: 20)();
   IntColumn get statusColor => integer()();
-  IntColumn get bankId => integer().nullable().references(Banks, #id)();
+  IntColumn get bankId =>
+      integer().nullable().references(Banks, #id)(); // source bank
+  IntColumn get toBankId => integer().nullable().references(
+    Banks,
+    #id,
+  )(); // destination bank for transfers
   DateTimeColumn get date => dateTime().withDefault(currentDateAndTime)();
   TextColumn get serverId => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -157,7 +162,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -166,7 +171,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // Future schema migrations will go here
+        if (from == 1 && to == 2) {
+          // Add toBankId column to transactions table for transfer support
+          await m.addColumn(transactions, transactions.toBankId);
+        }
       },
     );
   }

@@ -1410,6 +1410,20 @@ class $TransactionsTable extends Transactions
       'REFERENCES banks (id)',
     ),
   );
+  static const VerificationMeta _toBankIdMeta = const VerificationMeta(
+    'toBankId',
+  );
+  @override
+  late final GeneratedColumn<int> toBankId = GeneratedColumn<int>(
+    'to_bank_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES banks (id)',
+    ),
+  );
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
@@ -1480,6 +1494,7 @@ class $TransactionsTable extends Transactions
     status,
     statusColor,
     bankId,
+    toBankId,
     date,
     serverId,
     createdAt,
@@ -1558,6 +1573,12 @@ class $TransactionsTable extends Transactions
         bankId.isAcceptableOrUnknown(data['bank_id']!, _bankIdMeta),
       );
     }
+    if (data.containsKey('to_bank_id')) {
+      context.handle(
+        _toBankIdMeta,
+        toBankId.isAcceptableOrUnknown(data['to_bank_id']!, _toBankIdMeta),
+      );
+    }
     if (data.containsKey('date')) {
       context.handle(
         _dateMeta,
@@ -1629,6 +1650,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}bank_id'],
       ),
+      toBankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}to_bank_id'],
+      ),
       date: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}date'],
@@ -1667,6 +1692,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String status;
   final int statusColor;
   final int? bankId;
+  final int? toBankId;
   final DateTime date;
   final String? serverId;
   final DateTime createdAt;
@@ -1681,6 +1707,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.status,
     required this.statusColor,
     this.bankId,
+    this.toBankId,
     required this.date,
     this.serverId,
     required this.createdAt,
@@ -1699,6 +1726,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['status_color'] = Variable<int>(statusColor);
     if (!nullToAbsent || bankId != null) {
       map['bank_id'] = Variable<int>(bankId);
+    }
+    if (!nullToAbsent || toBankId != null) {
+      map['to_bank_id'] = Variable<int>(toBankId);
     }
     map['date'] = Variable<DateTime>(date);
     if (!nullToAbsent || serverId != null) {
@@ -1722,6 +1752,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       bankId: bankId == null && nullToAbsent
           ? const Value.absent()
           : Value(bankId),
+      toBankId: toBankId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(toBankId),
       date: Value(date),
       serverId: serverId == null && nullToAbsent
           ? const Value.absent()
@@ -1746,6 +1779,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       status: serializer.fromJson<String>(json['status']),
       statusColor: serializer.fromJson<int>(json['statusColor']),
       bankId: serializer.fromJson<int?>(json['bankId']),
+      toBankId: serializer.fromJson<int?>(json['toBankId']),
       date: serializer.fromJson<DateTime>(json['date']),
       serverId: serializer.fromJson<String?>(json['serverId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1765,6 +1799,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'status': serializer.toJson<String>(status),
       'statusColor': serializer.toJson<int>(statusColor),
       'bankId': serializer.toJson<int?>(bankId),
+      'toBankId': serializer.toJson<int?>(toBankId),
       'date': serializer.toJson<DateTime>(date),
       'serverId': serializer.toJson<String?>(serverId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1782,6 +1817,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     String? status,
     int? statusColor,
     Value<int?> bankId = const Value.absent(),
+    Value<int?> toBankId = const Value.absent(),
     DateTime? date,
     Value<String?> serverId = const Value.absent(),
     DateTime? createdAt,
@@ -1796,6 +1832,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     status: status ?? this.status,
     statusColor: statusColor ?? this.statusColor,
     bankId: bankId.present ? bankId.value : this.bankId,
+    toBankId: toBankId.present ? toBankId.value : this.toBankId,
     date: date ?? this.date,
     serverId: serverId.present ? serverId.value : this.serverId,
     createdAt: createdAt ?? this.createdAt,
@@ -1814,6 +1851,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ? data.statusColor.value
           : this.statusColor,
       bankId: data.bankId.present ? data.bankId.value : this.bankId,
+      toBankId: data.toBankId.present ? data.toBankId.value : this.toBankId,
       date: data.date.present ? data.date.value : this.date,
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -1833,6 +1871,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('status: $status, ')
           ..write('statusColor: $statusColor, ')
           ..write('bankId: $bankId, ')
+          ..write('toBankId: $toBankId, ')
           ..write('date: $date, ')
           ..write('serverId: $serverId, ')
           ..write('createdAt: $createdAt, ')
@@ -1852,6 +1891,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     status,
     statusColor,
     bankId,
+    toBankId,
     date,
     serverId,
     createdAt,
@@ -1870,6 +1910,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.status == this.status &&
           other.statusColor == this.statusColor &&
           other.bankId == this.bankId &&
+          other.toBankId == this.toBankId &&
           other.date == this.date &&
           other.serverId == this.serverId &&
           other.createdAt == this.createdAt &&
@@ -1886,6 +1927,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String> status;
   final Value<int> statusColor;
   final Value<int?> bankId;
+  final Value<int?> toBankId;
   final Value<DateTime> date;
   final Value<String?> serverId;
   final Value<DateTime> createdAt;
@@ -1900,6 +1942,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.status = const Value.absent(),
     this.statusColor = const Value.absent(),
     this.bankId = const Value.absent(),
+    this.toBankId = const Value.absent(),
     this.date = const Value.absent(),
     this.serverId = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1915,6 +1958,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required String status,
     required int statusColor,
     this.bankId = const Value.absent(),
+    this.toBankId = const Value.absent(),
     this.date = const Value.absent(),
     this.serverId = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1935,6 +1979,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? status,
     Expression<int>? statusColor,
     Expression<int>? bankId,
+    Expression<int>? toBankId,
     Expression<DateTime>? date,
     Expression<String>? serverId,
     Expression<DateTime>? createdAt,
@@ -1950,6 +1995,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (status != null) 'status': status,
       if (statusColor != null) 'status_color': statusColor,
       if (bankId != null) 'bank_id': bankId,
+      if (toBankId != null) 'to_bank_id': toBankId,
       if (date != null) 'date': date,
       if (serverId != null) 'server_id': serverId,
       if (createdAt != null) 'created_at': createdAt,
@@ -1967,6 +2013,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String>? status,
     Value<int>? statusColor,
     Value<int?>? bankId,
+    Value<int?>? toBankId,
     Value<DateTime>? date,
     Value<String?>? serverId,
     Value<DateTime>? createdAt,
@@ -1982,6 +2029,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       status: status ?? this.status,
       statusColor: statusColor ?? this.statusColor,
       bankId: bankId ?? this.bankId,
+      toBankId: toBankId ?? this.toBankId,
       date: date ?? this.date,
       serverId: serverId ?? this.serverId,
       createdAt: createdAt ?? this.createdAt,
@@ -2017,6 +2065,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (bankId.present) {
       map['bank_id'] = Variable<int>(bankId.value);
     }
+    if (toBankId.present) {
+      map['to_bank_id'] = Variable<int>(toBankId.value);
+    }
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
@@ -2046,6 +2097,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('status: $status, ')
           ..write('statusColor: $statusColor, ')
           ..write('bankId: $bankId, ')
+          ..write('toBankId: $toBankId, ')
           ..write('date: $date, ')
           ..write('serverId: $serverId, ')
           ..write('createdAt: $createdAt, ')
@@ -5470,24 +5522,6 @@ final class $$BanksTableReferences
     );
   }
 
-  static MultiTypedResultKey<$TransactionsTable, List<Transaction>>
-  _transactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.transactions,
-    aliasName: $_aliasNameGenerator(db.banks.id, db.transactions.bankId),
-  );
-
-  $$TransactionsTableProcessedTableManager get transactionsRefs {
-    final manager = $$TransactionsTableTableManager(
-      $_db,
-      $_db.transactions,
-    ).filter((f) => f.bankId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_transactionsRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
   static MultiTypedResultKey<$ScheduledPaymentsTable, List<ScheduledPayment>>
   _scheduledPaymentsRefsTable(_$AppDatabase db) =>
       MultiTypedResultKey.fromTable(
@@ -5587,31 +5621,6 @@ class $$BanksTableFilterComposer extends Composer<_$AppDatabase, $BanksTable> {
           }) => $$ExpensesTableFilterComposer(
             $db: $db,
             $table: $db.expenses,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> transactionsRefs(
-    Expression<bool> Function($$TransactionsTableFilterComposer f) f,
-  ) {
-    final $$TransactionsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.transactions,
-      getReferencedColumn: (t) => t.bankId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$TransactionsTableFilterComposer(
-            $db: $db,
-            $table: $db.transactions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5773,31 +5782,6 @@ class $$BanksTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> transactionsRefs<T extends Object>(
-    Expression<T> Function($$TransactionsTableAnnotationComposer a) f,
-  ) {
-    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.transactions,
-      getReferencedColumn: (t) => t.bankId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$TransactionsTableAnnotationComposer(
-            $db: $db,
-            $table: $db.transactions,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
   Expression<T> scheduledPaymentsRefs<T extends Object>(
     Expression<T> Function($$ScheduledPaymentsTableAnnotationComposer a) f,
   ) {
@@ -5840,7 +5824,6 @@ class $$BanksTableTableManager
           Bank,
           PrefetchHooks Function({
             bool expensesRefs,
-            bool transactionsRefs,
             bool scheduledPaymentsRefs,
           })
         > {
@@ -5910,16 +5893,11 @@ class $$BanksTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({
-                expensesRefs = false,
-                transactionsRefs = false,
-                scheduledPaymentsRefs = false,
-              }) {
+              ({expensesRefs = false, scheduledPaymentsRefs = false}) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (expensesRefs) db.expenses,
-                    if (transactionsRefs) db.transactions,
                     if (scheduledPaymentsRefs) db.scheduledPayments,
                   ],
                   addJoins: null,
@@ -5936,27 +5914,6 @@ class $$BanksTableTableManager
                                 table,
                                 p0,
                               ).expensesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.bankId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (transactionsRefs)
-                        await $_getPrefetchedData<
-                          Bank,
-                          $BanksTable,
-                          Transaction
-                        >(
-                          currentTable: table,
-                          referencedTable: $$BanksTableReferences
-                              ._transactionsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$BanksTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).transactionsRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.bankId == item.id,
@@ -6004,11 +5961,7 @@ typedef $$BanksTableProcessedTableManager =
       $$BanksTableUpdateCompanionBuilder,
       (Bank, $$BanksTableReferences),
       Bank,
-      PrefetchHooks Function({
-        bool expensesRefs,
-        bool transactionsRefs,
-        bool scheduledPaymentsRefs,
-      })
+      PrefetchHooks Function({bool expensesRefs, bool scheduledPaymentsRefs})
     >;
 typedef $$ExpensesTableCreateCompanionBuilder =
     ExpensesCompanion Function({
@@ -6467,6 +6420,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required String status,
       required int statusColor,
       Value<int?> bankId,
+      Value<int?> toBankId,
       Value<DateTime> date,
       Value<String?> serverId,
       Value<DateTime> createdAt,
@@ -6483,6 +6437,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String> status,
       Value<int> statusColor,
       Value<int?> bankId,
+      Value<int?> toBankId,
       Value<DateTime> date,
       Value<String?> serverId,
       Value<DateTime> createdAt,
@@ -6506,6 +6461,24 @@ final class $$TransactionsTableReferences
       $_db.banks,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_bankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $BanksTable _toBankIdTable(_$AppDatabase db) => db.banks.createAlias(
+    $_aliasNameGenerator(db.transactions.toBankId, db.banks.id),
+  );
+
+  $$BanksTableProcessedTableManager? get toBankId {
+    final $_column = $_itemColumn<int>('to_bank_id');
+    if ($_column == null) return null;
+    final manager = $$BanksTableTableManager(
+      $_db,
+      $_db.banks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_toBankIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -6586,6 +6559,29 @@ class $$TransactionsTableFilterComposer
     final $$BanksTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.bankId,
+      referencedTable: $db.banks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanksTableFilterComposer(
+            $db: $db,
+            $table: $db.banks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BanksTableFilterComposer get toBankId {
+    final $$BanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.toBankId,
       referencedTable: $db.banks,
       getReferencedColumn: (t) => t.id,
       builder:
@@ -6697,6 +6693,29 @@ class $$TransactionsTableOrderingComposer
     );
     return composer;
   }
+
+  $$BanksTableOrderingComposer get toBankId {
+    final $$BanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.toBankId,
+      referencedTable: $db.banks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.banks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -6768,6 +6787,29 @@ class $$TransactionsTableAnnotationComposer
     );
     return composer;
   }
+
+  $$BanksTableAnnotationComposer get toBankId {
+    final $$BanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.toBankId,
+      referencedTable: $db.banks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$TransactionsTableTableManager
@@ -6783,7 +6825,7 @@ class $$TransactionsTableTableManager
           $$TransactionsTableUpdateCompanionBuilder,
           (Transaction, $$TransactionsTableReferences),
           Transaction,
-          PrefetchHooks Function({bool bankId})
+          PrefetchHooks Function({bool bankId, bool toBankId})
         > {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
     : super(
@@ -6806,6 +6848,7 @@ class $$TransactionsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<int> statusColor = const Value.absent(),
                 Value<int?> bankId = const Value.absent(),
+                Value<int?> toBankId = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<String?> serverId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -6820,6 +6863,7 @@ class $$TransactionsTableTableManager
                 status: status,
                 statusColor: statusColor,
                 bankId: bankId,
+                toBankId: toBankId,
                 date: date,
                 serverId: serverId,
                 createdAt: createdAt,
@@ -6836,6 +6880,7 @@ class $$TransactionsTableTableManager
                 required String status,
                 required int statusColor,
                 Value<int?> bankId = const Value.absent(),
+                Value<int?> toBankId = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<String?> serverId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -6850,6 +6895,7 @@ class $$TransactionsTableTableManager
                 status: status,
                 statusColor: statusColor,
                 bankId: bankId,
+                toBankId: toBankId,
                 date: date,
                 serverId: serverId,
                 createdAt: createdAt,
@@ -6864,7 +6910,7 @@ class $$TransactionsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({bankId = false}) {
+          prefetchHooksCallback: ({bankId = false, toBankId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -6897,6 +6943,19 @@ class $$TransactionsTableTableManager
                               )
                               as T;
                     }
+                    if (toBankId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.toBankId,
+                                referencedTable: $$TransactionsTableReferences
+                                    ._toBankIdTable(db),
+                                referencedColumn: $$TransactionsTableReferences
+                                    ._toBankIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
 
                     return state;
                   },
@@ -6921,7 +6980,7 @@ typedef $$TransactionsTableProcessedTableManager =
       $$TransactionsTableUpdateCompanionBuilder,
       (Transaction, $$TransactionsTableReferences),
       Transaction,
-      PrefetchHooks Function({bool bankId})
+      PrefetchHooks Function({bool bankId, bool toBankId})
     >;
 typedef $$BudgetsTableCreateCompanionBuilder =
     BudgetsCompanion Function({

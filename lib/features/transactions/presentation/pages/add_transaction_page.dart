@@ -20,6 +20,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   final TextEditingController _amountController = TextEditingController();
   int? _selectedBankId;
   String? _selectedAccount;
+  int? _selectedToBankId; // For transfers
+  String? _selectedToAccount; // For transfers
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   String? _selectedCategory;
@@ -120,6 +122,11 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                       const SizedBox(height: 7),
 
                       _buildAccountField(),
+
+                      if (_selectedType == TransactionType.transfer) ...[
+                        const SizedBox(height: 7),
+                        _buildToAccountField(),
+                      ],
 
                       const SizedBox(height: 7),
 
@@ -250,8 +257,13 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   // Account selection field
   Widget _buildAccountField() {
+    final label = _selectedType == TransactionType.transfer
+        ? 'From Account'
+        : 'Account';
+    final hint = _selectedAccount ?? label;
+
     return GestureDetector(
-      onTap: () => _showAccountPicker(),
+      onTap: () => _showAccountPicker(isSource: true),
       child: Container(
         height: 48,
         decoration: BoxDecoration(
@@ -273,7 +285,45 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
             const SizedBox(width: 14),
             Expanded(
               child: Text(
-                _selectedAccount ?? 'Account',
+                hint,
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  color: Color(0xFFD6D6D6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  height: 1.366,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Color(0xFFD6D6D6), size: 15),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Destination account field for transfers
+  Widget _buildToAccountField() {
+    return GestureDetector(
+      onTap: () => _showAccountPicker(isSource: false),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: const Color(0xFF191919),
+          border: Border.all(
+            color: const Color(0xFFFFFFFF).withValues(alpha: 0.05),
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          children: [
+            const Icon(Icons.arrow_forward, color: Color(0xFFD6D6D6), size: 24),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                _selectedToAccount ?? 'To Account',
                 style: const TextStyle(
                   fontFamily: 'Manrope',
                   color: Color(0xFFD6D6D6),
@@ -380,7 +430,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   }
 
   // Show account picker modal
-  void _showAccountPicker() {
+  void _showAccountPicker({bool isSource = true}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF101010),
@@ -394,9 +444,11 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Select Account',
-                style: TextStyle(
+              Text(
+                isSource
+                    ? 'Select Source Account'
+                    : 'Select Destination Account',
+                style: const TextStyle(
                   fontFamily: 'Manrope',
                   color: Color(0xFFD6D6D6),
                   fontSize: 16,
@@ -448,8 +500,13 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                           ),
                           onTap: () {
                             setState(() {
-                              _selectedBankId = bank.id;
-                              _selectedAccount = bank.name;
+                              if (isSource) {
+                                _selectedBankId = bank.id;
+                                _selectedAccount = bank.name;
+                              } else {
+                                _selectedToBankId = bank.id;
+                                _selectedToAccount = bank.name;
+                              }
                             });
                             Navigator.pop(context);
                           },
@@ -586,6 +643,16 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       _showSnack('Please select an account');
       return;
     }
+    if (_selectedType == TransactionType.transfer &&
+        _selectedToBankId == null) {
+      _showSnack('Please select a destination account');
+      return;
+    }
+    if (_selectedType == TransactionType.transfer &&
+        _selectedBankId == _selectedToBankId) {
+      _showSnack('Source and destination accounts must be different');
+      return;
+    }
     if (_selectedCategory == null) {
       _showSnack('Please select a category');
       return;
@@ -622,6 +689,9 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           status: 'completed',
           statusColor: 0xFF00FF00,
           bankId: _selectedBankId,
+          toBankId: _selectedType == TransactionType.transfer
+              ? _selectedToBankId
+              : null,
           date: dt,
           serverId: null,
           createdAt: DateTime.now(),

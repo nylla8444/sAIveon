@@ -307,9 +307,20 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                               final sign = isIncome ? '+' : '-';
                               final amt = _formatCurrency(t.amount);
                               final time = _formatTime(t.date);
-                              final bankName = t.bankId != null
-                                  ? (bankNames[t.bankId!] ?? '-')
-                                  : '-';
+
+                              String bankName;
+                              if (t.type == 'transfer' &&
+                                  t.bankId != null &&
+                                  t.toBankId != null) {
+                                final fromBank = bankNames[t.bankId!] ?? '-';
+                                final toBank = bankNames[t.toBankId!] ?? '-';
+                                bankName = '$fromBank → $toBank';
+                              } else {
+                                bankName = t.bankId != null
+                                    ? (bankNames[t.bankId!] ?? '-')
+                                    : '-';
+                              }
+
                               return TransactionData(
                                 id: t.id!,
                                 title: t.name,

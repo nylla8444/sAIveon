@@ -3,13 +3,14 @@ import 'package:equatable/equatable.dart';
 class TransactionEntity extends Equatable {
   // Domain model for transactions
   final int? id;
-  final String type; // 'send' or 'receive'
+  final String type; // 'send', 'receive', or 'transfer'
   final double amount;
   final String name;
   final String iconPath;
   final String status;
   final int statusColor;
-  final int? bankId;
+  final int? bankId; // source bank
+  final int? toBankId; // destination bank for transfers
   final DateTime date;
   final String? serverId;
   final DateTime? createdAt;
@@ -25,6 +26,7 @@ class TransactionEntity extends Equatable {
     required this.status,
     required this.statusColor,
     this.bankId,
+    this.toBankId,
     required this.date,
     this.serverId,
     this.createdAt,
@@ -41,6 +43,7 @@ class TransactionEntity extends Equatable {
     String? status,
     int? statusColor,
     int? bankId,
+    int? toBankId,
     DateTime? date,
     String? serverId,
     DateTime? createdAt,
@@ -56,6 +59,7 @@ class TransactionEntity extends Equatable {
       status: status ?? this.status,
       statusColor: statusColor ?? this.statusColor,
       bankId: bankId ?? this.bankId,
+      toBankId: toBankId ?? this.toBankId,
       date: date ?? this.date,
       serverId: serverId ?? this.serverId,
       createdAt: createdAt ?? this.createdAt,
@@ -74,6 +78,7 @@ class TransactionEntity extends Equatable {
     status,
     statusColor,
     bankId,
+    toBankId,
     date,
     serverId,
     createdAt,

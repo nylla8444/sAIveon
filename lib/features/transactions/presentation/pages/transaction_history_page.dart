@@ -135,6 +135,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         _buildFilterTab('Spending', 74),
         const SizedBox(width: 31),
         _buildFilterTab('Income', 59),
+        const SizedBox(width: 31),
+        _buildFilterTab('Transfer', 68),
       ],
     );
   }
@@ -190,6 +192,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               filtered = filtered.where((t) => t.type == 'send');
             if (_selectedFilter == 'Income')
               filtered = filtered.where((t) => t.type == 'receive');
+            if (_selectedFilter == 'Transfer')
+              filtered = filtered.where((t) => t.type == 'transfer');
             if (_selectedBankId != null)
               filtered = filtered.where((t) => t.bankId == _selectedBankId);
             if (_selectedRange != null) {
@@ -269,13 +273,24 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   final isPositive = t.type == 'receive';
                   final sign = isPositive ? '+' : '-';
                   final amountStr = '$sign\$${t.amount.toStringAsFixed(0)}';
-                  final bankName = t.bankId != null
-                      ? (bankNames[t.bankId!] ?? '-')
-                      : '-';
+
+                  String description;
+                  if (t.type == 'transfer' &&
+                      t.bankId != null &&
+                      t.toBankId != null) {
+                    final fromBank = bankNames[t.bankId!] ?? '-';
+                    final toBank = bankNames[t.toBankId!] ?? '-';
+                    description = '$fromBank → $toBank';
+                  } else {
+                    description = t.bankId != null
+                        ? (bankNames[t.bankId!] ?? '-')
+                        : '-';
+                  }
+
                   return _TransactionData(
                     id: t.id!,
                     category: t.name,
-                    description: bankName,
+                    description: description,
                     time: _formatTime(t.date),
                     amount: amountStr,
                     isPositive: isPositive,

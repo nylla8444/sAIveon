@@ -32,6 +32,22 @@ class TransactionRepositoryImpl implements ITransactionRepository {
       }
     }
 
+    // Validate transfer has both source and destination banks
+    if (transaction.type == 'transfer') {
+      if (transaction.bankId == null || transaction.toBankId == null) {
+        throw Exception('Transfer requires both source and destination banks');
+      }
+      if (transaction.bankId == transaction.toBankId) {
+        throw Exception('Cannot transfer to the same bank');
+      }
+      final sourceBank = await _database.getBankById(transaction.bankId!);
+      if (sourceBank != null && sourceBank.balance < transaction.amount) {
+        throw Exception(
+          'Insufficient funds in source bank. Available: \$${sourceBank.balance.toStringAsFixed(2)}, Required: \$${transaction.amount.toStringAsFixed(2)}',
+        );
+      }
+    }
+
     final companion = TransactionMapper.toCompanion(transaction);
     final id = await _database.insertTransaction(companion);
     // Apply balance effect
@@ -72,7 +88,57 @@ class TransactionRepositoryImpl implements ITransactionRepository {
     TransactionEntity tx, {
     required bool revert,
   }) async {
-    if (tx.bankId == null) return; // No associated bank
+    if (tx.type == 'transfer') {
+      // Handle transfer between two banks
+      if (tx.bankId == null || tx.toBankId == null) return;
+
+      final sourceBank = await _database.getBankById(tx.bankId!);
+      final destBank = await _database.getBankById(tx.toBankId!);
+
+      if (sourceBank == null || destBank == null) return;
+
+      // Amount to subtract from source (positive delta)
+      // Amount to add to destination (positive delta)
+      final delta = revert ? -tx.amount : tx.amount;
+
+      // Update source bank (decrease balance)
+      final newSourceBalance = sourceBank.balance - delta;
+      await _database.updateBank(
+        BanksCompanion(
+          id: Value(sourceBank.id),
+          name: Value(sourceBank.name),
+          accountNumber: Value(sourceBank.accountNumber),
+          balance: Value(newSourceBalance < 0 ? 0 : newSourceBalance),
+          color: Value(sourceBank.color),
+          logoPath: Value(sourceBank.logoPath),
+          serverId: Value(sourceBank.serverId),
+          createdAt: Value(sourceBank.createdAt),
+          updatedAt: Value(DateTime.now()),
+          isDeleted: Value(sourceBank.isDeleted),
+        ),
+      );
+
+      // Update destination bank (increase balance)
+      final newDestBalance = destBank.balance + delta;
+      await _database.updateBank(
+        BanksCompanion(
+          id: Value(destBank.id),
+          name: Value(destBank.name),
+          accountNumber: Value(destBank.accountNumber),
+          balance: Value(newDestBalance < 0 ? 0 : newDestBalance),
+          color: Value(destBank.color),
+          logoPath: Value(destBank.logoPath),
+          serverId: Value(destBank.serverId),
+          createdAt: Value(destBank.createdAt),
+          updatedAt: Value(DateTime.now()),
+          isDeleted: Value(destBank.isDeleted),
+        ),
+      );
+      return;
+    }
+
+    // Handle send/receive for single bank
+    if (tx.bankId == null) return;
     final bank = await _database.getBankById(tx.bankId!);
     if (bank == null) return;
 
@@ -83,9 +149,6 @@ class TransactionRepositoryImpl implements ITransactionRepository {
         break;
       case 'send':
         delta = -tx.amount; // decrease
-        break;
-      case 'transfer':
-        delta = 0; // no change (single-bank model)
         break;
       default:
         delta = 0;

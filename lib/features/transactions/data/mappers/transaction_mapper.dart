@@ -13,6 +13,7 @@ class TransactionMapper {
       status: transaction.status,
       statusColor: transaction.statusColor,
       bankId: transaction.bankId,
+      toBankId: transaction.toBankId,
       date: transaction.date,
       serverId: transaction.serverId,
       createdAt: transaction.createdAt,
@@ -31,6 +32,7 @@ class TransactionMapper {
       status: Value(entity.status),
       statusColor: Value(entity.statusColor),
       bankId: Value(entity.bankId),
+      toBankId: Value(entity.toBankId),
       date: Value(entity.date),
       serverId: Value(entity.serverId),
       createdAt: entity.createdAt != null
