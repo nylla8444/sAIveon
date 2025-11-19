@@ -26,17 +26,39 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
   TimeOfDay? _selectedTime;
   String? _selectedCategory;
 
-  final List<String> _categories = [
-    'Groceries',
-    'Shopping',
-    'Food',
-    'Transportation',
-    'Entertainment',
-    'Bills',
-    'Salary',
-    'Investment',
-    'Other',
-  ];
+  // Categories based on transaction type
+  final Map<TransactionType, List<String>> _categoriesByType = {
+    TransactionType.income: [
+      'Salary',
+      'Freelance',
+      'Business',
+      'Investment',
+      'Gift',
+      'Bonus',
+      'Other Income',
+    ],
+    TransactionType.spending: [
+      'Food & Dining',
+      'Shopping',
+      'Transportation',
+      'Bills & Utilities',
+      'Entertainment',
+      'Healthcare',
+      'Education',
+      'Groceries',
+      'Other Expenses',
+    ],
+    TransactionType.transfer: [
+      'Savings',
+      'Emergency Fund',
+      'Investment Account',
+      'Loan Payment',
+      'Credit Card Payment',
+      'Other Transfer',
+    ],
+  };
+
+  List<String> get _currentCategories => _categoriesByType[_selectedType]!;
 
   @override
   void initState() {
@@ -636,7 +658,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
             SizedBox(
               height: 300,
               child: ListView(
-                children: _categories
+                children: _currentCategories
                     .map(
                       (category) => ListTile(
                         title: Text(

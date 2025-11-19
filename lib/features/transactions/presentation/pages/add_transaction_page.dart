@@ -26,18 +26,39 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   TimeOfDay? _selectedTime;
   String? _selectedCategory;
 
-  // Dynamic accounts come from DB via bottom sheet stream
-  final List<String> _categories = [
-    'Groceries',
-    'Shopping',
-    'Food',
-    'Transportation',
-    'Entertainment',
-    'Bills',
-    'Salary',
-    'Investment',
-    'Other',
-  ];
+  // Categories based on transaction type
+  final Map<TransactionType, List<String>> _categoriesByType = {
+    TransactionType.income: [
+      'Salary',
+      'Freelance',
+      'Business',
+      'Investment',
+      'Gift',
+      'Bonus',
+      'Other Income',
+    ],
+    TransactionType.spending: [
+      'Food & Dining',
+      'Shopping',
+      'Transportation',
+      'Bills & Utilities',
+      'Entertainment',
+      'Healthcare',
+      'Education',
+      'Groceries',
+      'Other Expenses',
+    ],
+    TransactionType.transfer: [
+      'Savings',
+      'Emergency Fund',
+      'Investment Account',
+      'Loan Payment',
+      'Credit Card Payment',
+      'Other Transfer',
+    ],
+  };
+
+  List<String> get _currentCategories => _categoriesByType[_selectedType]!;
 
   @override
   void dispose() {
@@ -599,7 +620,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
             SizedBox(
               height: 300,
               child: ListView(
-                children: _categories
+                children: _currentCategories
                     .map(
                       (category) => ListTile(
                         title: Text(
