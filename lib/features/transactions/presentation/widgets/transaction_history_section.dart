@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/di/service_locator.dart';
+import '../pages/edit_transaction_page.dart';
 
 class TransactionHistorySection extends StatefulWidget {
   final List<TransactionData> transactions;
@@ -294,9 +295,21 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
               onTap: () async {
                 Navigator.pop(context);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit coming soon')),
-                  );
+                  // Fetch the full transaction entity
+                  final txEntity = await locator.transactionRepository
+                      .watchAllTransactions()
+                      .first
+                      .then((list) => list.firstWhere((t) => t.id == tx.id));
+
+                  if (mounted) {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            EditTransactionPage(transaction: txEntity),
+                      ),
+                    );
+                  }
                 }
               },
             ),

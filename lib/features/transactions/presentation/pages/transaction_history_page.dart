@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/widgets/index.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../domain/entities/transaction_entity.dart';
+import 'edit_transaction_page.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
   const TransactionHistoryPage({super.key});
@@ -710,31 +711,63 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 ),
               ),
               const SizedBox(height: 6),
-              GestureDetector(
-                onTap: () => _confirmDelete(transaction),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: Colors.red.withOpacity(0.4),
-                      width: 1,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => _navigateToEdit(transaction),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFFBA9BFF).withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Color(0xFFBA9BFF),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Delete',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Colors.redAccent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => _confirmDelete(transaction),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Colors.red.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Colors.redAccent,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -762,11 +795,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               ),
               onTap: () async {
                 Navigator.pop(context);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit coming soon')),
-                  );
-                }
+                _navigateToEdit(tx);
               },
             ),
             ListTile(
@@ -846,6 +875,25 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           context,
         ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
       }
+    }
+  }
+
+  Future<void> _navigateToEdit(_TransactionData data) async {
+    final locator = ServiceProvider.of(context);
+
+    // Fetch the full transaction entity
+    final txEntity = await locator.transactionRepository
+        .watchAllTransactions()
+        .first
+        .then((list) => list.firstWhere((t) => t.id == data.id));
+
+    if (mounted) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditTransactionPage(transaction: txEntity),
+        ),
+      );
     }
   }
 }
