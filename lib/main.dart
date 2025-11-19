@@ -9,6 +9,7 @@ import 'features/transactions/domain/entities/transaction_entity.dart';
 import 'features/transactions/transactions.dart';
 // TransactionHistorySection types are exported via the transactions barrel
 import 'features/budgets/budgets.dart';
+import 'features/budgets/domain/entities/budget_entity.dart';
 import 'features/expenses/expenses.dart';
 import 'features/scheduled_payments/scheduled_payments.dart';
 import 'features/statistics/statistics.dart';
@@ -356,15 +357,51 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
 
                 // Monthly Budget Section - Using modular component
                 const SizedBox(height: 30),
-                MonthlyBudgetSection(
-                  spent: 3300,
-                  limit: 5000,
-                  onSeeAllTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MonthlyBudgetPage(),
+                Builder(
+                  builder: (context) {
+                    final locator = ServiceProvider.of(context);
+                    final now = DateTime.now();
+
+                    return StreamBuilder(
+                      stream: _getMonthlyBudgetStream(
+                        locator,
+                        now.month,
+                        now.year,
                       ),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return MonthlyBudgetSection(
+                            spent: 0,
+                            limit: 5000,
+                            onSeeAllTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const MonthlyBudgetPage(),
+                                ),
+                              );
+                            },
+                          );
+                        }
+
+                        final data = snapshot.data as Map<String, dynamic>;
+                        final budget = data['budget'] as BudgetEntity;
+                        final spent = data['spent'] as double;
+
+                        return MonthlyBudgetSection(
+                          spent: spent,
+                          limit: budget.budgetAmount,
+                          onSeeAllTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MonthlyBudgetPage(),
+                              ),
+                            );
+                          },
+                        );
+                      },
                     );
                   },
                 ),
@@ -543,6 +580,58 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
         ),
       ],
     );
+  }
+
+  Stream<Map<String, dynamic>> _getMonthlyBudgetStream(
+    ServiceLocator locator,
+    int month,
+    int year,
+  ) async* {
+    // Get or create monthly budget
+    final budget = await locator.budgetRepository.getOrCreateMonthlyBudget(
+      month,
+      year,
+    );
+
+    // Calculate spending (sum of all 'send' transactions in current month)
+    final startDate = DateTime(year, month, 1);
+    final endDate = DateTime(year, month + 1, 0, 23, 59, 59);
+    final allTransactions = await locator.transactionRepository
+        .watchAllTransactions()
+        .first;
+
+    double spending = 0.0;
+    for (var tx in allTransactions) {
+      if (!tx.isDeleted &&
+          tx.type == 'send' &&
+          tx.date.isAfter(startDate) &&
+          tx.date.isBefore(endDate)) {
+        spending += tx.amount;
+      }
+    }
+
+    yield {'budget': budget, 'spent': spending};
+
+    // Continue watching for changes
+    await for (final _ in locator.budgetRepository.watchAllBudgets()) {
+      final updatedBudget = await locator.budgetRepository
+          .getOrCreateMonthlyBudget(month, year);
+      final updatedTransactions = await locator.transactionRepository
+          .watchAllTransactions()
+          .first;
+
+      double updatedSpending = 0.0;
+      for (var tx in updatedTransactions) {
+        if (!tx.isDeleted &&
+            tx.type == 'send' &&
+            tx.date.isAfter(startDate) &&
+            tx.date.isBefore(endDate)) {
+          updatedSpending += tx.amount;
+        }
+      }
+
+      yield {'budget': updatedBudget, 'spent': updatedSpending};
+    }
   }
 
   @override

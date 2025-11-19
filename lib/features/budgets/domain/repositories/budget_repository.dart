@@ -7,6 +7,9 @@ abstract class IBudgetRepository {
   /// Get budgets for a specific month and year
   Future<List<BudgetEntity>> getBudgetsByMonthYear(int month, int year);
 
+  /// Get or create monthly overall budget for a specific month and year
+  Future<BudgetEntity> getOrCreateMonthlyBudget(int month, int year);
+
   /// Add a new budget
   Future<int> addBudget(BudgetEntity budget);
 

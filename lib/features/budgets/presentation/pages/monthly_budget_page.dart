@@ -1,138 +1,312 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/index.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../budgets/domain/entities/budget_entity.dart';
 
-class MonthlyBudgetPage extends StatelessWidget {
+class MonthlyBudgetPage extends StatefulWidget {
   const MonthlyBudgetPage({super.key});
 
   @override
+  State<MonthlyBudgetPage> createState() => _MonthlyBudgetPageState();
+}
+
+class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
+  final ScrollController _monthlyChartScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _monthlyChartScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final currentMonth = now.month;
+    final currentYear = now.year;
+
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header with back button
-            Padding(
-              padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
-              child: Row(
-                children: [
-                  CustomBackButton(
-                    size: 40,
-                    backgroundColor: const Color(0xFF2A2A2A),
-                    iconColor: const Color(0xFFFFFFFF),
-                  ),
-                  const SizedBox(width: 15),
-                  const Text(
-                    'Monthly Budget',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Color(0xFFFFFFFF),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        child: StreamBuilder<Map<String, dynamic>>(
+          stream: _getMonthlyBudgetStream(currentMonth, currentYear),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            const SizedBox(height: 25),
+            final budget = snapshot.data!['budget'] as BudgetEntity;
+            final spending = snapshot.data!['spending'] as double;
+            final limit = budget.budgetAmount;
+            final percentage = (spending / limit).clamp(0.0, 1.0);
+            final percentageText = '${(percentage * 100).toInt()}%';
 
-            // Progress bar section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 19),
-              child: Column(
-                children: [
-                  // Text above progress bar
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Determine color based on percentage
+            Color progressColor;
+            if (percentage < 0.8) {
+              progressColor = const Color(0xFFA882FF); // Purple - Within budget
+            } else if (percentage < 1.0) {
+              progressColor = const Color(0xFFFFE282); // Yellow - Risk
+            } else {
+              progressColor = const Color(0xFFFF8282); // Red - Overspending
+            }
+
+            return Column(
+              children: [
+                // Header with back button and edit button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                  child: Row(
                     children: [
-                      Text(
-                        'Spend: \$3,300 / \$5,000',
+                      CustomBackButton(
+                        size: 40,
+                        backgroundColor: const Color(0xFF2A2A2A),
+                        iconColor: const Color(0xFFFFFFFF),
+                      ),
+                      const SizedBox(width: 15),
+                      const Text(
+                        'Monthly Budget',
                         style: TextStyle(
                           fontFamily: 'Poppins',
-                          color: Color(0xFF949494),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.5,
+                          color: Color(0xFFFFFFFF),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Text(
-                        '66%',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          color: Color(0xFF949494),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.5,
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => _showEditBudgetDialog(context, budget),
+                        icon: const Icon(Icons.edit, color: Color(0xFFA882FF)),
+                        iconSize: 24,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                // Progress bar section with dynamic data
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 19),
+                  child: Column(
+                    children: [
+                      // Text above progress bar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Spend: \$${spending.toStringAsFixed(0)} / \$${limit.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              color: Color(0xFF949494),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              height: 1.5,
+                            ),
+                          ),
+                          Text(
+                            percentageText,
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              color: Color(0xFF949494),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Progress bar with dynamic color and percentage
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Stack(
+                          children: [
+                            // Light background
+                            Container(
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: progressColor.withOpacity(0.43),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            // Progress
+                            FractionallySizedBox(
+                              widthFactor: percentage,
+                              child: Container(
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: progressColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  // Progress bar - light background (43% opacity), dark progress (100% opacity)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Stack(
+                ),
+
+                const SizedBox(height: 20),
+
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: Column(
                       children: [
-                        // Light background - A882FF at 43% opacity
-                        Container(
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFA882FF).withOpacity(0.43),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        // Dark progress - A882FF at 100% opacity
-                        FractionallySizedBox(
-                          widthFactor: 0.66, // 66%
-                          child: Container(
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFA882FF),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
+                        // Monthly Budget Chart
+                        _buildMonthlyBudgetChart(),
+
+                        const SizedBox(height: 14),
+
+                        // Last 6 Periods Chart
+                        _buildLast6PeriodsChart(),
+
+                        const SizedBox(height: 14),
+
+                        // Expenses Donut Chart
+                        _buildExpensesChart(),
+
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Scrollable content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Column(
-                  children: [
-                    // Monthly Budget Chart
-                    _buildMonthlyBudgetChart(),
-
-                    const SizedBox(height: 14),
-
-                    // Last 6 Periods Chart
-                    _buildLast6PeriodsChart(),
-
-                    const SizedBox(height: 14),
-
-                    // Expenses Donut Chart
-                    _buildExpensesChart(),
-
-                    const SizedBox(height: 20),
-                  ],
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
+  Stream<Map<String, dynamic>> _getMonthlyBudgetStream(
+    int month,
+    int year,
+  ) async* {
+    final locator = ServiceProvider.of(context);
+    final budgetRepo = locator.budgetRepository;
+    final transactionRepo = locator.transactionRepository;
+
+    // Get or create monthly budget
+    final budget = await budgetRepo.getOrCreateMonthlyBudget(month, year);
+
+    // Calculate spending (sum of all 'send' transactions in current month)
+    final startDate = DateTime(year, month, 1);
+    final endDate = DateTime(year, month + 1, 0, 23, 59, 59);
+    final allTransactions = await transactionRepo.watchAllTransactions().first;
+
+    double spending = 0.0;
+    for (var tx in allTransactions) {
+      if (!tx.isDeleted &&
+          tx.type == 'send' &&
+          tx.date.isAfter(startDate) &&
+          tx.date.isBefore(endDate)) {
+        spending += tx.amount;
+      }
+    }
+
+    yield {'budget': budget, 'spending': spending};
+
+    // Continue watching for changes
+    await for (final _ in budgetRepo.watchAllBudgets()) {
+      final updatedBudget = await budgetRepo.getOrCreateMonthlyBudget(
+        month,
+        year,
+      );
+      final updatedTransactions = await transactionRepo
+          .watchAllTransactions()
+          .first;
+
+      double updatedSpending = 0.0;
+      for (var tx in updatedTransactions) {
+        if (!tx.isDeleted &&
+            tx.type == 'send' &&
+            tx.date.isAfter(startDate) &&
+            tx.date.isBefore(endDate)) {
+          updatedSpending += tx.amount;
+        }
+      }
+
+      yield {'budget': updatedBudget, 'spending': updatedSpending};
+    }
+  }
+
+  void _showEditBudgetDialog(BuildContext context, BudgetEntity currentBudget) {
+    final locator = ServiceProvider.of(context);
+    final controller = TextEditingController(
+      text: currentBudget.budgetAmount.toStringAsFixed(0),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text(
+          'Edit Monthly Budget',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Budget Limit',
+            labelStyle: TextStyle(color: Color(0xFF949494)),
+            prefixText: '\$',
+            prefixStyle: TextStyle(color: Colors.white),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFA882FF)),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFA882FF)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF949494)),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newAmount = double.tryParse(controller.text);
+              if (newAmount != null && newAmount > 0) {
+                final budgetRepo = locator.budgetRepository;
+                final updatedBudget = currentBudget.copyWith(
+                  budgetAmount: newAmount,
+                );
+                await budgetRepo.updateBudget(updatedBudget);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              }
+            },
+            child: const Text(
+              'Save',
+              style: TextStyle(color: Color(0xFFA882FF)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMonthlyBudgetChart() {
+    final now = DateTime.now();
+    final currentMonth = now.month;
+
+    // Generate months from January to current month
+    final months = <String>[];
+    for (int i = 1; i <= currentMonth; i++) {
+      months.add(_getMonthAbbreviation(i));
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(15),
@@ -155,11 +329,11 @@ class MonthlyBudgetPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Chart area
+          // Chart and labels area - scrollable together
           SizedBox(
-            height: 152,
+            height: 175, // 152 (chart) + 8 (spacing) + 15 (labels)
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Y-axis labels
                 SizedBox(
@@ -174,86 +348,83 @@ class MonthlyBudgetPage extends StatelessWidget {
                       _buildYAxisLabel('\$1,000'),
                       _buildYAxisLabel('\$500'),
                       _buildYAxisLabel('\$0'),
+                      const SizedBox(height: 23), // Space for labels below
                     ],
                   ),
                 ),
                 const SizedBox(width: 9),
-                // Chart area
+                // Chart and labels - scrollable together
                 Expanded(
-                  child: CustomPaint(
-                    painter: _MonthlyBudgetChartPainter(),
-                    child: Container(),
+                  child: Builder(
+                    builder: (context) {
+                      // Auto-scroll to current month after first build
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_monthlyChartScrollController.hasClients) {
+                          // Calculate scroll position to show current month
+                          // If there are many months, scroll to the end to show recent months
+                          final maxScroll = _monthlyChartScrollController
+                              .position
+                              .maxScrollExtent;
+                          if (maxScroll > 0) {
+                            _monthlyChartScrollController.animateTo(
+                              maxScroll,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOut,
+                            );
+                          }
+                        }
+                      });
+
+                      return SingleChildScrollView(
+                        controller: _monthlyChartScrollController,
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: months.length * 50.0, // 50px per month
+                          child: Column(
+                            children: [
+                              // Chart
+                              SizedBox(
+                                height: 152,
+                                child: CustomPaint(
+                                  painter: _MonthlyBudgetChartPainter(
+                                    months.length,
+                                  ),
+                                  child: Container(),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              // Month labels
+                              SizedBox(
+                                height: 15,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: months.asMap().entries.map((entry) {
+                                    return Text(
+                                      entry.value,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        color: entry.key == months.length - 1
+                                            ? const Color(0xFFBA9BFF)
+                                            : const Color(0xFF949494),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.5,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 8),
-          // X-axis labels - perfectly centered under each data point
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Space for Y-axis labels
-              const SizedBox(width: 50),
-              const SizedBox(width: 9),
-              // Labels positioned at data point centers
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SizedBox(
-                      height: 15,
-                      child: Stack(
-                        children: [
-                          _buildCenteredXAxisLabel(
-                            'Jan',
-                            constraints.maxWidth,
-                            0,
-                            7,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'Feb',
-                            constraints.maxWidth,
-                            1,
-                            7,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'Mar',
-                            constraints.maxWidth,
-                            2,
-                            7,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'Apr',
-                            constraints.maxWidth,
-                            3,
-                            7,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'May',
-                            constraints.maxWidth,
-                            4,
-                            7,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'Jun',
-                            constraints.maxWidth,
-                            5,
-                            7,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'July',
-                            constraints.maxWidth,
-                            6,
-                            7,
-                            isHighlighted: true,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -261,6 +432,17 @@ class MonthlyBudgetPage extends StatelessWidget {
   }
 
   Widget _buildLast6PeriodsChart() {
+    final now = DateTime.now();
+    final currentMonth = now.month;
+    final currentYear = now.year;
+
+    // Generate last 6 months (current month as last)
+    final months = <String>[];
+    for (int i = 5; i >= 0; i--) {
+      final date = DateTime(currentYear, currentMonth - i, 1);
+      months.add(_getMonthAbbreviation(date.month));
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(15),
@@ -283,7 +465,7 @@ class MonthlyBudgetPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Chart area
+          // Chart area with horizontal scroll
           SizedBox(
             height: 134,
             child: Row(
@@ -306,73 +488,56 @@ class MonthlyBudgetPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 9),
-                // Chart bars
+                // Chart bars - scrollable
                 Expanded(
-                  child: CustomPaint(
-                    painter: _Last6PeriodsChartPainter(),
-                    child: Container(),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: 6 * 50.0, // 6 months * 50px
+                      child: CustomPaint(
+                        painter: _Last6PeriodsChartPainter(),
+                        child: Container(),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 8),
-          // X-axis labels - perfectly centered under each bar
+          // X-axis labels - scrollable
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Space for Y-axis labels
               const SizedBox(width: 50),
               const SizedBox(width: 9),
-              // Labels positioned at bar centers
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SizedBox(
-                      height: 15,
-                      child: Stack(
-                        children: [
-                          _buildCenteredXAxisLabel(
-                            'Jan',
-                            constraints.maxWidth,
-                            0,
-                            6,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: 6 * 50.0,
+                    height: 15,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: months.asMap().entries.map((entry) {
+                        return Text(
+                          entry.value,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color:
+                                entry.key ==
+                                    5 // Last month is highlighted
+                                ? const Color(0xFFBA9BFF)
+                                : const Color(0xFF949494),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            height: 1.5,
                           ),
-                          _buildCenteredXAxisLabel(
-                            'Feb',
-                            constraints.maxWidth,
-                            1,
-                            6,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'Mar',
-                            constraints.maxWidth,
-                            2,
-                            6,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'Apr',
-                            constraints.maxWidth,
-                            3,
-                            6,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'May',
-                            constraints.maxWidth,
-                            4,
-                            6,
-                          ),
-                          _buildCenteredXAxisLabel(
-                            'Jun',
-                            constraints.maxWidth,
-                            5,
-                            6,
-                            isHighlighted: true,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -395,98 +560,179 @@ class MonthlyBudgetPage extends StatelessWidget {
   }
 
   Widget _buildExpensesChart() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: const Color(0xFF101010),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.06), width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Expenses',
-            style: TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFFD6D6D6),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              height: 1.366,
+    final locator = ServiceProvider.of(context);
+    final now = DateTime.now();
+    final startDate = DateTime(now.year, now.month, 1);
+    final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+    return StreamBuilder<List<dynamic>>(
+      stream: locator.expenseRepository.watchAllExpenses(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Container(
+            width: double.infinity,
+            height: 200,
+            padding: const EdgeInsets.all(17),
+            decoration: BoxDecoration(
+              color: const Color(0xFF101010),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.06),
+                width: 2,
+              ),
             ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Filter expenses for current month and group by category
+        final allExpenses = snapshot.data!;
+        final categoryTotals = <String, double>{};
+        double total = 0;
+
+        for (var expense in allExpenses) {
+          if (!expense.isDeleted &&
+              expense.date.isAfter(startDate) &&
+              expense.date.isBefore(endDate)) {
+            categoryTotals[expense.category] =
+                (categoryTotals[expense.category] ?? 0) + expense.amount;
+            total += expense.amount;
+          }
+        }
+
+        // Define category colors
+        final categoryColors = {
+          'Shopping': const Color(0xFFFF8282),
+          'Food': const Color(0xFFF982FF),
+          'Groceries': const Color(0xFF82FFB4),
+          'Health': const Color(0xFFA882FF),
+          'Transpo': const Color(0xFFFFF782),
+        };
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(17),
+          decoration: BoxDecoration(
+            color: const Color(0xFF101010),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.06), width: 2),
           ),
-          const SizedBox(height: 10),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Donut chart
-              SizedBox(
-                width: 166,
-                height: 166,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CustomPaint(
-                      size: const Size(166, 166),
-                      painter: _DonutChartPainter(),
-                    ),
-                    const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              const Text(
+                'Expenses',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  color: Color(0xFFD6D6D6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  height: 1.366,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  // Donut chart
+                  SizedBox(
+                    width: 166,
+                    height: 166,
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        Text(
-                          '\$994',
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            color: Color(0xFFE6E6E6),
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            height: 1.366,
+                        CustomPaint(
+                          size: const Size(166, 166),
+                          painter: _DonutChartPainter(
+                            categoryTotals,
+                            categoryColors,
                           ),
                         ),
-                        Text(
-                          'total',
-                          style: TextStyle(
-                            fontFamily: 'Manrope',
-                            color: Color(0xFFE6E6E6),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            height: 1.366,
-                          ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '\$${total.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontFamily: 'Manrope',
+                                color: Color(0xFFE6E6E6),
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                height: 1.366,
+                              ),
+                            ),
+                            const Text(
+                              'total',
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                color: Color(0xFFE6E6E6),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                height: 1.366,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 34),
-              // Legend
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildExpenseLegendItem(
-                      'Shopping',
-                      const Color(0xFFFF8282),
+                  ),
+                  const SizedBox(width: 34),
+                  // Legend - always show all categories
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildExpenseLegendItem(
+                          'Shopping',
+                          categoryColors['Shopping']!,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildExpenseLegendItem(
+                          'Food',
+                          categoryColors['Food']!,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildExpenseLegendItem(
+                          'Groceries',
+                          categoryColors['Groceries']!,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildExpenseLegendItem(
+                          'Health',
+                          categoryColors['Health']!,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildExpenseLegendItem(
+                          'Transpo',
+                          categoryColors['Transpo']!,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    _buildExpenseLegendItem('Food', const Color(0xFFF982FF)),
-                    const SizedBox(height: 12),
-                    _buildExpenseLegendItem(
-                      'Groceries',
-                      const Color(0xFF82FFB4),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildExpenseLegendItem('Health', const Color(0xFFA882FF)),
-                    const SizedBox(height: 12),
-                    _buildExpenseLegendItem('Transpo', const Color(0xFFFFF782)),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  String _getMonthAbbreviation(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 
   Widget _buildYAxisLabel(String text) {
@@ -498,41 +744,6 @@ class MonthlyBudgetPage extends StatelessWidget {
         fontSize: 10,
         fontWeight: FontWeight.w500,
         height: 1.5,
-      ),
-    );
-  }
-
-  Widget _buildCenteredXAxisLabel(
-    String text,
-    double width,
-    int index,
-    int total, {
-    bool isHighlighted = false,
-  }) {
-    // Calculate position using spaceEvenly logic
-    final spacing = width / (total + 1);
-    final centerX = spacing * (index + 1);
-
-    return Positioned(
-      left: centerX,
-      child: Transform.translate(
-        offset: const Offset(
-          -15,
-          0,
-        ), // Shift left by half approximate text width
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            color: isHighlighted
-                ? const Color(0xFFBA9BFF)
-                : const Color(0xFF949494),
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            height: 1.5,
-          ),
-        ),
       ),
     );
   }
@@ -590,33 +801,26 @@ class MonthlyBudgetPage extends StatelessWidget {
 
 // Custom painter for Monthly Budget chart
 class _MonthlyBudgetChartPainter extends CustomPainter {
+  final int monthCount;
+
+  _MonthlyBudgetChartPainter(this.monthCount);
+
   @override
   void paint(Canvas canvas, Size size) {
     final width = size.width;
     final height = size.height;
 
-    // Budget line data points (values: $1200, $1400, $1600, $1500, $1800, $1900, $2000)
+    // Generate data points for available months (using sample data)
     // Normalized to 0-1 where 1 = $2500
-    final budgetData = [
-      0.48, // Jan: $1200
-      0.56, // Feb: $1400
-      0.64, // Mar: $1600
-      0.60, // Apr: $1500
-      0.72, // May: $1800
-      0.76, // Jun: $1900
-      0.80, // July: $2000
-    ];
+    final budgetData = List<double>.generate(
+      monthCount,
+      (i) => 0.48 + (i * 0.05), // Sample increasing pattern
+    );
 
-    // Spending line data points (values: $900, $1100, $1300, $1200, $1500, $1600, $1700)
-    final spendingData = [
-      0.36, // Jan: $900
-      0.44, // Feb: $1100
-      0.52, // Mar: $1300
-      0.48, // Apr: $1200
-      0.60, // May: $1500
-      0.64, // Jun: $1600
-      0.68, // July: $1700
-    ];
+    final spendingData = List<double>.generate(
+      monthCount,
+      (i) => 0.36 + (i * 0.05), // Sample increasing pattern
+    );
 
     // Draw purple budget line
     final budgetPaint = Paint()
@@ -626,7 +830,6 @@ class _MonthlyBudgetChartPainter extends CustomPainter {
 
     final budgetPath = Path();
     for (int i = 0; i < budgetData.length; i++) {
-      // Use spaceEvenly logic: equal spacing on both sides and between items
       final spacing = width / (budgetData.length + 1);
       final x = spacing * (i + 1);
       final y = height * (1 - budgetData[i]);
@@ -751,6 +954,11 @@ class _Last6PeriodsChartPainter extends CustomPainter {
 
 // Custom painter for Donut chart
 class _DonutChartPainter extends CustomPainter {
+  final Map<String, double> categoryTotals;
+  final Map<String, Color> categoryColors;
+
+  _DonutChartPainter(this.categoryTotals, this.categoryColors);
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -760,61 +968,41 @@ class _DonutChartPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - 20) / 2;
 
-    // Define segments with realistic expense distribution
-    // Total = $994: Shopping $250 (25.2%), Food $220 (22.1%), Groceries $200 (20.1%),
-    //                Health $180 (18.1%), Transpo $144 (14.5%)
-    final segments = [
-      {
-        'start': -90.0,
-        'sweep': 52.0,
-        'color': const Color(0xFFFFF782),
-        'value': 144,
-        'label': 'Transpo',
-      }, // Transpo - yellow ($144, 14.5%)
-      {
-        'start': -38.0,
-        'sweep': 65.0,
-        'color': const Color(0xFFA882FF),
-        'value': 180,
-        'label': 'Health',
-      }, // Health - purple ($180, 18.1%)
-      {
-        'start': 27.0,
-        'sweep': 72.0,
-        'color': const Color(0xFF82FFB4),
-        'value': 200,
-        'label': 'Groceries',
-      }, // Groceries - green ($200, 20.1%)
-      {
-        'start': 99.0,
-        'sweep': 80.0,
-        'color': const Color(0xFFF982FF),
-        'value': 220,
-        'label': 'Food',
-      }, // Food - pink ($220, 22.1%)
-      {
-        'start': 179.0,
-        'sweep': 91.0,
-        'color': const Color(0xFFFF8282),
-        'value': 250,
-        'label': 'Shopping',
-      }, // Shopping - red ($250, 25.2%)
-    ];
-
-    for (final segment in segments) {
-      paint.color = segment['color'] as Color;
+    if (categoryTotals.isEmpty) {
+      // Draw a gray circle if no data
+      paint.color = const Color(0xFF3A3A3A);
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
-        _degreesToRadians(segment['start'] as double),
-        _degreesToRadians(segment['sweep'] as double),
+        -90 * (3.14159 / 180),
+        360 * (3.14159 / 180),
         false,
         paint,
       );
+      return;
     }
-  }
 
-  double _degreesToRadians(double degrees) {
-    return degrees * 3.141592653589793 / 180;
+    // Calculate total and percentages
+    final total = categoryTotals.values.fold<double>(
+      0,
+      (sum, val) => sum + val,
+    );
+    var startAngle = -90.0; // Start at top
+
+    // Draw each category segment
+    for (var entry in categoryTotals.entries) {
+      final sweepAngle = (entry.value / total) * 360;
+      paint.color = categoryColors[entry.key] ?? const Color(0xFF949494);
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle * (3.14159 / 180),
+        sweepAngle * (3.14159 / 180),
+        false,
+        paint,
+      );
+
+      startAngle += sweepAngle;
+    }
   }
 
   @override
