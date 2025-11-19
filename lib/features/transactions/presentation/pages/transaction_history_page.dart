@@ -287,10 +287,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 }).toList();
                 return Column(
                   children: [
-                    if (index == 0)
-                      _buildSpecialTransactionCard(date, data)
-                    else
-                      _buildTransactionSection(date, data),
+                    _buildTransactionSection(date, data),
                     if (index < groups.length - 1) const SizedBox(height: 14),
                   ],
                 );
@@ -570,144 +567,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     if (picked != null) setState(() => _selectedRange = picked);
   }
 
-  Widget _buildSpecialTransactionCard(
-    String date,
-    List<_TransactionData> transactions,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF101010),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.06), width: 2),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Text(
-                date,
-                style: const TextStyle(
-                  fontFamily: 'Manrope',
-                  color: Color(0xFFC6C6C6),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  height: 1.366,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Container(height: 1, color: const Color(0xFFC6C6C6)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ...transactions.asMap().entries.map((entry) {
-            final index = entry.key;
-            final transaction = entry.value;
-            return Column(
-              children: [
-                if (index > 0) ...[
-                  const SizedBox(height: 10),
-                  Container(height: 1, color: const Color(0xFF4F4F4F)),
-                  const SizedBox(height: 10),
-                ],
-                _buildCompactTransaction(
-                  transaction.category,
-                  transaction.description,
-                  transaction.time,
-                  transaction.amount,
-                  transaction.isPositive,
-                  transaction.icon,
-                ),
-              ],
-            );
-          }).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompactTransaction(
-    String category,
-    String description,
-    String time,
-    String amount,
-    bool isPositive,
-    IconData icon,
-  ) {
-    return Row(
-      children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: const Color(0xFF191919),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Icon(icon, color: Colors.white, size: 16),
-        ),
-        const SizedBox(width: 11),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                category,
-                style: const TextStyle(
-                  fontFamily: 'Manrope',
-                  color: Color(0xFFE6E6E6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  height: 1.366,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  color: Color(0xFF949494),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              amount,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                color: isPositive
-                    ? const Color(0xFFA47FFA)
-                    : const Color(0xFF949494),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              time,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                color: Color(0xFF9E9E9E),
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildTransactionSection(
     String date,
     List<_TransactionData> transactions,
@@ -767,99 +626,149 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   }
 
   Widget _buildTransactionItem(_TransactionData transaction) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: const Color(0xFF101010),
-            borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
+      onLongPress: () => _showTransactionActions(transaction),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF101010),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(transaction.icon, color: Colors.white, size: 20),
           ),
-          child: Icon(transaction.icon, color: Colors.white, size: 20),
-        ),
-        const SizedBox(width: 11),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  transaction.category,
+                  style: const TextStyle(
+                    fontFamily: 'Manrope',
+                    color: Color(0xFFE6E6E6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    height: 1.366,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  transaction.description,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Color(0xFF949494),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                transaction.category,
-                style: const TextStyle(
-                  fontFamily: 'Manrope',
-                  color: Color(0xFFE6E6E6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  height: 1.366,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                transaction.description,
-                style: const TextStyle(
+                transaction.amount,
+                style: TextStyle(
                   fontFamily: 'Poppins',
-                  color: Color(0xFF949494),
+                  color: transaction.isPositive
+                      ? const Color(0xFFA47FFA)
+                      : const Color(0xFF949494),
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   height: 1.5,
                 ),
               ),
+              const SizedBox(height: 3),
+              Text(
+                transaction.time,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  color: Color(0xFF9E9E9E),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 6),
+              GestureDetector(
+                onTap: () => _confirmDelete(transaction),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2A2A2A),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: Colors.red.withOpacity(0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Colors.redAccent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        ],
+      ),
+    );
+  }
+
+  void _showTransactionActions(_TransactionData tx) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF101010),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              transaction.amount,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                color: transaction.isPositive
-                    ? const Color(0xFFA47FFA)
-                    : const Color(0xFF949494),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
+            ListTile(
+              leading: const Icon(Icons.edit, color: Color(0xFFD6D6D6)),
+              title: const Text(
+                'Update Transaction',
+                style: TextStyle(color: Color(0xFFD6D6D6)),
               ),
+              onTap: () async {
+                Navigator.pop(context);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Edit coming soon')),
+                  );
+                }
+              },
             ),
-            const SizedBox(height: 3),
-            Text(
-              transaction.time,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                color: Color(0xFF9E9E9E),
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.redAccent),
+              title: const Text(
+                'Delete Transaction',
+                style: TextStyle(color: Colors.redAccent),
               ),
+              onTap: () async {
+                Navigator.pop(context);
+                _confirmDelete(tx);
+              },
             ),
-            const SizedBox(height: 6),
-            GestureDetector(
-              onTap: () => _confirmDelete(transaction),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: Colors.red.withOpacity(0.4),
-                    width: 1,
-                  ),
-                ),
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    color: Colors.redAccent,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
+            const SizedBox(height: 8),
           ],
         ),
-      ],
+      ),
     );
   }
 

@@ -22,6 +22,16 @@ class TransactionRepositoryImpl implements ITransactionRepository {
 
   @override
   Future<int> addTransaction(TransactionEntity transaction) async {
+    // Validate sufficient funds for 'send' transactions
+    if (transaction.type == 'send' && transaction.bankId != null) {
+      final bank = await _database.getBankById(transaction.bankId!);
+      if (bank != null && bank.balance < transaction.amount) {
+        throw Exception(
+          'Insufficient funds. Available: \$${bank.balance.toStringAsFixed(2)}, Required: \$${transaction.amount.toStringAsFixed(2)}',
+        );
+      }
+    }
+
     final companion = TransactionMapper.toCompanion(transaction);
     final id = await _database.insertTransaction(companion);
     // Apply balance effect

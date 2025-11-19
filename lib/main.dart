@@ -134,13 +134,16 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
     return '$h:$m$p';
   }
 
-  IconData _iconForTransaction(String iconPath) {
-    // Simple mapping; expand as needed
-    if (iconPath.contains('wallet')) return Icons.account_balance_wallet;
-    if (iconPath.contains('car')) return Icons.directions_car;
-    if (iconPath.contains('cart')) return Icons.shopping_cart;
-    if (iconPath.contains('payment')) return Icons.payments;
-    return Icons.swap_horiz;
+  IconData _iconForTransaction(String type) {
+    switch (type) {
+      case 'receive':
+        return Icons.arrow_downward;
+      case 'transfer':
+        return Icons.swap_horiz;
+      case 'send':
+      default:
+        return Icons.arrow_upward;
+    }
   }
 
   Widget _getCurrentPage() {
@@ -289,35 +292,49 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                       builder: (context, snapshot) {
                         final txns =
                             snapshot.data ?? const <TransactionEntity>[];
-                        // Take last 4 transactions for Home preview
-                        final recent = txns.take(4).map((t) {
-                          final isIncome = t.type == 'receive';
-                          final sign = isIncome ? '+' : '-';
-                          final amt = _formatCurrency(t.amount);
-                          final time = _formatTime(t.date);
-                          return TransactionData(
-                            id: t.id!,
-                            title: t.name,
-                            subtitle: 'Transaction',
-                            amount: '$sign$amt',
-                            time: time,
-                            date: t.date,
-                            type: t.type,
-                            rawAmount: t.amount,
-                            bankId: t.bankId,
-                            icon: _iconForTransaction(t.iconPath),
-                          );
-                        }).toList();
 
-                        return TransactionHistorySection(
-                          transactions: recent,
-                          onSeeAllTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const TransactionHistoryPage(),
-                              ),
+                        return StreamBuilder(
+                          stream: locator.bankRepository.watchAllBanks(),
+                          builder: (context, bankSnap) {
+                            final banks = bankSnap.data ?? const [];
+                            final bankNames = {
+                              for (final b in banks)
+                                if (b.id != null) b.id!: b.name,
+                            };
+
+                            final recent = txns.map((t) {
+                              final isIncome = t.type == 'receive';
+                              final sign = isIncome ? '+' : '-';
+                              final amt = _formatCurrency(t.amount);
+                              final time = _formatTime(t.date);
+                              final bankName = t.bankId != null
+                                  ? (bankNames[t.bankId!] ?? '-')
+                                  : '-';
+                              return TransactionData(
+                                id: t.id!,
+                                title: t.name,
+                                subtitle: bankName,
+                                amount: '$sign$amt',
+                                time: time,
+                                date: t.date,
+                                type: t.type,
+                                rawAmount: t.amount,
+                                bankId: t.bankId,
+                                icon: _iconForTransaction(t.type),
+                              );
+                            }).toList();
+
+                            return TransactionHistorySection(
+                              transactions: recent.toList(),
+                              onSeeAllTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const TransactionHistoryPage(),
+                                  ),
+                                );
+                              },
                             );
                           },
                         );

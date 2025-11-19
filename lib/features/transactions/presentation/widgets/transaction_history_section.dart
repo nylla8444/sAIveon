@@ -37,14 +37,36 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
     return '${dt.day.toString().padLeft(2, '0')} ${months[dt.month - 1]} ${dt.year}';
   }
 
-  @override
   Widget build(BuildContext context) {
-    final filteredTransactions = widget.transactions.where((transaction) {
-      if (_selectedTab == 'All') return true;
-      if (_selectedTab == 'Spending') return transaction.amount.startsWith('-');
-      if (_selectedTab == 'Income') return transaction.amount.startsWith('+');
-      return true;
+    // Sort all transactions by date descending first
+    final sorted = List<TransactionData>.from(widget.transactions)
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    // Filter based on selected tab using type rather than amount sign
+    List<TransactionData> filtered = sorted.where((tx) {
+      switch (_selectedTab) {
+        case 'Income':
+          return tx.type == 'receive';
+        case 'Spending':
+          return tx.type == 'send';
+        case 'Transfer':
+          return tx.type == 'transfer';
+        default:
+          return true;
+      }
     }).toList();
+
+    // Limit to max 5 items for preview
+    if (filtered.length > 5) {
+      filtered = filtered.sublist(0, 5);
+    }
+
+    // Group transactions by date
+    final Map<String, List<TransactionData>> groupedByDate = {};
+    for (var transaction in filtered) {
+      final dateKey = _formatDate(transaction.date);
+      groupedByDate.putIfAbsent(dateKey, () => []).add(transaction);
+    }
 
     return Container(
       width: double.infinity,
@@ -90,40 +112,49 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
             children: [
               _buildTab('All'),
               const SizedBox(width: 55),
-              _buildTab('Spending'),
-              const SizedBox(width: 70),
               _buildTab('Income'),
+              const SizedBox(width: 55),
+              _buildTab('Spending'),
+              const SizedBox(width: 55),
+              _buildTab('Transfer'),
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            filteredTransactions.isNotEmpty
-                ? _formatDate(filteredTransactions.first.date)
-                : _formatDate(DateTime.now()),
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFFC6C6C6),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              height: 1.366,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(height: 1, color: const Color(0xFFC6C6C6)),
-          const SizedBox(height: 15),
-          ...filteredTransactions.asMap().entries.map((entry) {
-            final index = entry.key;
-            final transaction = entry.value;
-            return Column(
-              children: [
-                _buildTransactionItem(transaction),
-                if (index < filteredTransactions.length - 1) ...[
-                  const SizedBox(height: 10),
-                  Container(height: 1, color: const Color(0xFF4F4F4F)),
-                  const SizedBox(height: 15),
-                ],
-              ],
-            );
+          ...groupedByDate.entries.expand((entry) {
+            final dateHeader = entry.key;
+            final transactions = entry.value;
+            final isFirstGroup = groupedByDate.keys.first == dateHeader;
+
+            return [
+              if (!isFirstGroup) const SizedBox(height: 15),
+              Text(
+                dateHeader,
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  color: Color(0xFFC6C6C6),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  height: 1.366,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(height: 1, color: const Color(0xFFC6C6C6)),
+              const SizedBox(height: 15),
+              ...transactions.asMap().entries.map((txEntry) {
+                final index = txEntry.key;
+                final transaction = txEntry.value;
+                return Column(
+                  children: [
+                    _buildTransactionItem(transaction),
+                    if (index < transactions.length - 1) ...[
+                      const SizedBox(height: 10),
+                      Container(height: 1, color: const Color(0xFF4F4F4F)),
+                      const SizedBox(height: 15),
+                    ],
+                  ],
+                );
+              }),
+            ];
           }),
         ],
       ),
