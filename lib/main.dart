@@ -374,43 +374,6 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                 // Expenses Section - Using modular component
                 const SizedBox(height: 30),
                 ExpensesHorizontalScrollSection(
-                  expenses: [
-                    ExpenseData(
-                      category: 'Groceries',
-                      amount: '\$44',
-                      percentage: '15%',
-                      isIncrease: true,
-                      icon: Icons.shopping_cart,
-                    ),
-                    ExpenseData(
-                      category: 'Shopping',
-                      amount: '\$158',
-                      percentage: '2%',
-                      isIncrease: false,
-                      icon: Icons.shopping_bag,
-                    ),
-                    ExpenseData(
-                      category: 'Food',
-                      amount: '\$44',
-                      percentage: '15%',
-                      isIncrease: true,
-                      icon: Icons.restaurant,
-                    ),
-                    ExpenseData(
-                      category: 'Toys',
-                      amount: '\$44',
-                      percentage: '15%',
-                      isIncrease: true,
-                      icon: Icons.toys,
-                    ),
-                    ExpenseData(
-                      category: 'Transport',
-                      amount: '\$120',
-                      percentage: '8%',
-                      isIncrease: true,
-                      icon: Icons.directions_car,
-                    ),
-                  ],
                   onSeeAllTap: () {
                     Navigator.push(
                       context,

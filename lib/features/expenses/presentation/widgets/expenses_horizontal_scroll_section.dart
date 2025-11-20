@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../pages/add_expense_page.dart';
 import '../pages/expense_detail_page.dart';
+import '../../../../core/di/service_locator.dart';
 
 class ExpenseData {
   final String category;
@@ -21,121 +21,211 @@ class ExpenseData {
 }
 
 class ExpensesHorizontalScrollSection extends StatelessWidget {
-  final List<ExpenseData> expenses;
   final VoidCallback? onSeeAllTap;
-  final VoidCallback? onAddExpense;
 
-  const ExpensesHorizontalScrollSection({
-    super.key,
-    required this.expenses,
-    this.onSeeAllTap,
-    this.onAddExpense,
-  });
+  const ExpensesHorizontalScrollSection({super.key, this.onSeeAllTap});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Expenses',
-                style: TextStyle(
-                  color: Color(0xFFD6D6D6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Manrope',
-                  height: 1.366,
-                ),
-              ),
-              GestureDetector(
-                onTap: onSeeAllTap,
-                child: const Text(
-                  'See All',
-                  style: TextStyle(
-                    color: Color(0xFFC6C6C6),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Manrope',
-                    height: 1.366,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 15),
+    final transactionRepository = ServiceProvider.of(
+      context,
+    ).transactionRepository;
 
-        // Horizontal Scroll List
-        SizedBox(
-          height: 148,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: expenses.length + 1, // +1 for the add button
-            separatorBuilder: (context, index) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              // Show add expense button at the end
-              if (index == expenses.length) {
-                return _buildAddExpenseButton(context);
-              }
-              return ExpenseCard(expense: expenses[index]);
-            },
-          ),
-        ),
-      ],
-    );
-  }
+    return StreamBuilder(
+      stream: transactionRepository.watchAllTransactions(),
+      builder: (context, snapshot) {
+        final expenses = _calculateExpenseData(snapshot.data ?? []);
 
-  Widget _buildAddExpenseButton(BuildContext context) {
-    return GestureDetector(
-      onTap:
-          onAddExpense ??
-          () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddExpensePage()),
-            );
-          },
-      child: Container(
-        width: 89,
-        height: 148,
-        decoration: BoxDecoration(
-          color: const Color(0xFF101010),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF191919), width: 1),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFF191919),
-                borderRadius: BorderRadius.circular(24),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Expenses',
+                        style: TextStyle(
+                          color: Color(0xFFD6D6D6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Manrope',
+                          height: 1.366,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF191919),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Text(
+                          'Monthly',
+                          style: TextStyle(
+                            color: Color(0xFF949494),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Manrope',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: onSeeAllTap,
+                    child: const Text(
+                      'See All',
+                      style: TextStyle(
+                        color: Color(0xFFC6C6C6),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Manrope',
+                        height: 1.366,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.add, color: Color(0xFFBA9BFF), size: 28),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Add\nExpense',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Manrope',
-                color: Color(0xFFD6D6D6),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            const SizedBox(height: 15),
+
+            // Horizontal Scroll List
+            SizedBox(
+              height: 148,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: expenses.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  return ExpenseCard(expense: expenses[index]);
+                },
               ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  List<ExpenseData> _calculateExpenseData(List<dynamic> transactions) {
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+    final previousMonth = DateTime(now.year, now.month - 1);
+
+    // Define all spending categories
+    final List<String> allCategories = [
+      'Food & Dining',
+      'Shopping',
+      'Transportation',
+      'Bills & Utilities',
+      'Entertainment',
+      'Healthcare',
+      'Education',
+      'Groceries',
+      'Other Expenses',
+    ];
+
+    // Filter transactions for current and previous month (spending only)
+    final currentMonthTransactions = transactions.where((tx) {
+      final txDate = tx.date;
+      return tx.type == 'send' &&
+          txDate.year == currentMonth.year &&
+          txDate.month == currentMonth.month;
+    }).toList();
+
+    final previousMonthTransactions = transactions.where((tx) {
+      final txDate = tx.date;
+      return tx.type == 'send' &&
+          txDate.year == previousMonth.year &&
+          txDate.month == previousMonth.month;
+    }).toList();
+
+    // Group by category and calculate totals
+    final Map<String, double> currentMonthByCategory = {};
+    final Map<String, double> previousMonthByCategory = {};
+
+    for (var tx in currentMonthTransactions) {
+      final category = tx.name;
+      currentMonthByCategory[category] =
+          (currentMonthByCategory[category] ?? 0) + tx.amount;
+    }
+
+    for (var tx in previousMonthTransactions) {
+      final category = tx.name;
+      previousMonthByCategory[category] =
+          (previousMonthByCategory[category] ?? 0) + tx.amount;
+    }
+
+    // Create ExpenseData list for all categories
+    final List<ExpenseData> expenseList = [];
+
+    for (var category in allCategories) {
+      final currentAmount = currentMonthByCategory[category] ?? 0;
+      final previousAmount = previousMonthByCategory[category] ?? 0;
+
+      // Calculate percentage change
+      double percentageChange = 0;
+      bool isIncrease = false;
+
+      if (previousAmount > 0) {
+        percentageChange =
+            ((currentAmount - previousAmount) / previousAmount * 100).abs();
+        isIncrease = currentAmount > previousAmount;
+      } else if (currentAmount > 0) {
+        percentageChange = 100;
+        isIncrease = true;
+      }
+
+      expenseList.add(
+        ExpenseData(
+          category: category,
+          amount: '\$${currentAmount.toStringAsFixed(0)}',
+          percentage: '${percentageChange.toStringAsFixed(0)}%',
+          isIncrease: isIncrease,
+          icon: _getCategoryIcon(category),
+        ),
+      );
+    }
+
+    // Sort by amount (descending)
+    expenseList.sort((a, b) {
+      final aAmount = double.parse(
+        a.amount.replaceAll('\$', '').replaceAll(',', ''),
+      );
+      final bAmount = double.parse(
+        b.amount.replaceAll('\$', '').replaceAll(',', ''),
+      );
+      return bAmount.compareTo(aAmount);
+    });
+
+    return expenseList;
+  }
+
+  IconData _getCategoryIcon(String category) {
+    final iconMap = {
+      'Food & Dining': Icons.restaurant,
+      'Shopping': Icons.shopping_bag,
+      'Transportation': Icons.directions_car,
+      'Bills & Utilities': Icons.receipt_long,
+      'Entertainment': Icons.movie,
+      'Healthcare': Icons.medical_services,
+      'Education': Icons.school,
+      'Groceries': Icons.shopping_cart,
+      'Other Expenses': Icons.category,
+    };
+    return iconMap[category] ?? Icons.attach_money;
   }
 }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/widgets/index.dart';
+import '../../../../core/di/service_locator.dart';
 
 class ExpenseDetailPage extends StatelessWidget {
   final String category;
@@ -19,266 +21,342 @@ class ExpenseDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF050505),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with back button and title
-              Row(
+    final transactionRepository = ServiceProvider.of(
+      context,
+    ).transactionRepository;
+
+    return StreamBuilder(
+      stream: transactionRepository.watchAllTransactions(),
+      builder: (context, snapshot) {
+        final transactions = snapshot.data ?? [];
+        final categoryTransactions = _filterCategoryTransactions(transactions);
+        final groupedTransactions = _groupTransactionsByDate(
+          categoryTransactions,
+        );
+        final chartData = _calculateMonthlyData(transactions);
+
+        return Scaffold(
+          backgroundColor: const Color(0xFF050505),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CustomBackButton(),
-                  const SizedBox(width: 12),
-                  Text(
-                    '$category Expenses',
-                    style: const TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                  // Header with back button and title
+                  Row(
+                    children: [
+                      const CustomBackButton(),
+                      const SizedBox(width: 12),
+                      Text(
+                        '$category Expenses',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 19),
+
+                  // Search bar
+                  Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF191919),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: TextField(
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        color: Color(0xFFD6D6D6),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Super AI Search',
+                        hintStyle: const TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Color(0xFF949494),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF949494),
+                          size: 16,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 14,
+                        ),
+                      ),
                     ),
                   ),
+
+                  const SizedBox(height: 19),
+
+                  // Spending chart card
+                  _buildSpendingChart(chartData),
+
+                  const SizedBox(height: 19),
+
+                  // Transaction history sections
+                  if (groupedTransactions.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(30),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF101010),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.06),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'No transactions yet',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            color: Color(0xFF949494),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    ...groupedTransactions.entries.map((entry) {
+                      return Column(
+                        children: [
+                          _buildTransactionSection(entry.key, entry.value),
+                          const SizedBox(height: 14),
+                        ],
+                      );
+                    }).toList(),
+
+                  const SizedBox(height: 20),
                 ],
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-              const SizedBox(height: 19),
+  List<dynamic> _filterCategoryTransactions(List<dynamic> transactions) {
+    return transactions.where((tx) {
+      return tx.type == 'send' && tx.name == category;
+    }).toList();
+  }
 
-              // Search bar
-              Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF191919),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
-                    width: 1,
+  Map<String, List<_TransactionData>> _groupTransactionsByDate(
+    List<dynamic> transactions,
+  ) {
+    final Map<String, List<_TransactionData>> grouped = {};
+
+    for (var tx in transactions) {
+      final dateStr = DateFormat('dd MMMM yyyy').format(tx.date);
+
+      if (!grouped.containsKey(dateStr)) {
+        grouped[dateStr] = [];
+      }
+
+      grouped[dateStr]!.add(
+        _TransactionData(
+          category: tx.name,
+          description: tx.status,
+          time: DateFormat('hh:mma').format(tx.date),
+          amount: '-\$${tx.amount.toStringAsFixed(0)}',
+          icon: icon,
+        ),
+      );
+    }
+
+    // Sort by date descending
+    final sortedEntries = grouped.entries.toList()
+      ..sort((a, b) {
+        final dateA = DateFormat('dd MMMM yyyy').parse(a.key);
+        final dateB = DateFormat('dd MMMM yyyy').parse(b.key);
+        return dateB.compareTo(dateA);
+      });
+
+    return Map.fromEntries(sortedEntries);
+  }
+
+  Map<int, double> _calculateMonthlyData(List<dynamic> transactions) {
+    final now = DateTime.now();
+    final Map<int, double> monthlyData = {};
+
+    // Initialize last 6 months with 0 (current month + 5 previous months)
+    for (int i = 5; i >= 0; i--) {
+      final month = DateTime(now.year, now.month - i);
+      monthlyData[month.month] = 0.0;
+    }
+
+    // Calculate spending for each month
+    for (var tx in transactions) {
+      if (tx.type == 'send' && tx.name == category) {
+        final txMonth = tx.date.month;
+        final txYear = tx.date.year;
+
+        // Only include transactions from the last 6 months
+        final monthsDiff = (now.year - txYear) * 12 + (now.month - txMonth);
+        if (monthsDiff >= 0 && monthsDiff <= 5) {
+          monthlyData[txMonth] = (monthlyData[txMonth] ?? 0) + tx.amount;
+        }
+      }
+    }
+
+    return monthlyData;
+  }
+
+  Widget _buildSpendingChart(Map<int, double> chartData) {
+    final now = DateTime.now();
+    final totalSpent = chartData.values.fold(0.0, (sum, val) => sum + val);
+
+    // Get the last 6 months data in chronological order
+    final List<MapEntry<int, double>> sortedData = [];
+    for (int i = 5; i >= 0; i--) {
+      final month = DateTime(now.year, now.month - i);
+      sortedData.add(MapEntry(month.month, chartData[month.month] ?? 0.0));
+    }
+
+    // Calculate max value for chart scaling
+    final maxValue = sortedData
+        .map((e) => e.value)
+        .reduce((a, b) => a > b ? a : b);
+    final chartMax = maxValue > 0 ? maxValue : 2500.0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: const Color(0xFF101010),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.06), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                color: Color(0xFFD6D6D6),
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                height: 1.366,
+              ),
+              children: [
+                const TextSpan(text: 'You spent '),
+                TextSpan(text: '\$${totalSpent.toStringAsFixed(0)}'),
+                const TextSpan(text: ' on '),
+                TextSpan(
+                  text: category,
+                  style: const TextStyle(color: Color(0xFFBA9BFF)),
+                ),
+                const TextSpan(text: ' in six months'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Chart area
+          SizedBox(
+            height: 152,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Y-axis labels
+                SizedBox(
+                  width: 50,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildYAxisLabel(
+                        '\$${(chartMax * 1.0).toStringAsFixed(0)}',
+                      ),
+                      _buildYAxisLabel(
+                        '\$${(chartMax * 0.8).toStringAsFixed(0)}',
+                      ),
+                      _buildYAxisLabel(
+                        '\$${(chartMax * 0.6).toStringAsFixed(0)}',
+                      ),
+                      _buildYAxisLabel(
+                        '\$${(chartMax * 0.4).toStringAsFixed(0)}',
+                      ),
+                      _buildYAxisLabel(
+                        '\$${(chartMax * 0.2).toStringAsFixed(0)}',
+                      ),
+                      _buildYAxisLabel('\$0'),
+                    ],
                   ),
                 ),
-                child: TextField(
-                  style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    color: Color(0xFFD6D6D6),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.5,
+                const SizedBox(width: 9),
+                // Chart
+                Expanded(
+                  child: CustomPaint(
+                    painter: _ExpenseChartPainter(
+                      chartData: sortedData,
+                      maxValue: chartMax,
+                    ),
+                    child: Container(),
                   ),
-                  decoration: InputDecoration(
-                    hintText: 'Super AI Search',
-                    hintStyle: const TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Color(0xFF949494),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.5,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Color(0xFF949494),
-                      size: 16,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 14,
-                    ),
-                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // X-axis labels
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(width: 50),
+              const SizedBox(width: 9),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final monthLabels = <Widget>[];
+                    for (int i = 0; i < 6; i++) {
+                      final month = DateTime(now.year, now.month - (5 - i));
+                      final monthName = DateFormat('MMM').format(month);
+                      final isCurrentMonth =
+                          month.month == now.month && month.year == now.year;
+
+                      monthLabels.add(
+                        _buildCenteredXAxisLabel(
+                          monthName,
+                          constraints.maxWidth,
+                          i,
+                          6,
+                          isHighlighted: isCurrentMonth,
+                        ),
+                      );
+                    }
+
+                    return SizedBox(
+                      height: 15,
+                      child: Stack(children: monthLabels),
+                    );
+                  },
                 ),
               ),
-
-              const SizedBox(height: 19),
-
-              // Spending chart card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(17),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF101010),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.06),
-                    width: 2,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontFamily: 'Manrope',
-                          color: Color(0xFFD6D6D6),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          height: 1.366,
-                        ),
-                        children: [
-                          const TextSpan(text: 'You spent '),
-                          TextSpan(text: amount),
-                          const TextSpan(text: ' on '),
-                          TextSpan(
-                            text: category,
-                            style: const TextStyle(color: Color(0xFFBA9BFF)),
-                          ),
-                          const TextSpan(text: ' in six months'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Chart area
-                    SizedBox(
-                      height: 152,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          // Y-axis labels
-                          SizedBox(
-                            width: 50,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                _buildYAxisLabel('\$2,500'),
-                                _buildYAxisLabel('\$2,000'),
-                                _buildYAxisLabel('\$1,500'),
-                                _buildYAxisLabel('\$1,000'),
-                                _buildYAxisLabel('\$500'),
-                                _buildYAxisLabel('\$0'),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 9),
-                          // Chart
-                          Expanded(
-                            child: CustomPaint(
-                              painter: _ExpenseChartPainter(),
-                              child: Container(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // X-axis labels
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(width: 50),
-                        const SizedBox(width: 9),
-                        Expanded(
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              return SizedBox(
-                                height: 15,
-                                child: Stack(
-                                  children: [
-                                    _buildCenteredXAxisLabel(
-                                      'Jan',
-                                      constraints.maxWidth,
-                                      0,
-                                      7,
-                                    ),
-                                    _buildCenteredXAxisLabel(
-                                      'Feb',
-                                      constraints.maxWidth,
-                                      1,
-                                      7,
-                                    ),
-                                    _buildCenteredXAxisLabel(
-                                      'Mar',
-                                      constraints.maxWidth,
-                                      2,
-                                      7,
-                                    ),
-                                    _buildCenteredXAxisLabel(
-                                      'Apr',
-                                      constraints.maxWidth,
-                                      3,
-                                      7,
-                                    ),
-                                    _buildCenteredXAxisLabel(
-                                      'May',
-                                      constraints.maxWidth,
-                                      4,
-                                      7,
-                                    ),
-                                    _buildCenteredXAxisLabel(
-                                      'Jun',
-                                      constraints.maxWidth,
-                                      5,
-                                      7,
-                                    ),
-                                    _buildCenteredXAxisLabel(
-                                      'July',
-                                      constraints.maxWidth,
-                                      6,
-                                      7,
-                                      isHighlighted: true,
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 19),
-
-              // Transaction history sections
-              _buildTransactionSection('11 October 2025', [
-                _TransactionData(
-                  category: category,
-                  description: 'Shop X',
-                  time: '06:40PM',
-                  amount: '-\$2',
-                  icon: icon,
-                ),
-                _TransactionData(
-                  category: category,
-                  description: 'Shop X',
-                  time: '06:40PM',
-                  amount: '-\$2',
-                  icon: icon,
-                ),
-              ]),
-
-              const SizedBox(height: 14),
-
-              _buildTransactionSection('10 October 2025', [
-                _TransactionData(
-                  category: category,
-                  description: 'Shop X',
-                  time: '06:40PM',
-                  amount: '-\$15',
-                  icon: icon,
-                ),
-                _TransactionData(
-                  category: category,
-                  description: 'Shop X',
-                  time: '06:40PM',
-                  amount: '-\$2',
-                  icon: icon,
-                ),
-                _TransactionData(
-                  category: category,
-                  description: 'Shop X',
-                  time: '06:40PM',
-                  amount: '-\$17',
-                  icon: icon,
-                ),
-              ]),
-
-              const SizedBox(height: 20),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -461,6 +539,11 @@ class ExpenseDetailPage extends StatelessWidget {
 
 // Custom painter for expense chart
 class _ExpenseChartPainter extends CustomPainter {
+  final List<MapEntry<int, double>> chartData;
+  final double maxValue;
+
+  _ExpenseChartPainter({required this.chartData, required this.maxValue});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -468,25 +551,36 @@ class _ExpenseChartPainter extends CustomPainter {
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
-    // Sample data points (7 months)
-    final data = [0.45, 0.38, 0.52, 0.42, 0.58, 0.48, 0.65];
+    final dotPaint = Paint()
+      ..color = const Color(0xFFFF8282)
+      ..style = PaintingStyle.fill;
+
+    if (chartData.isEmpty) return;
 
     final path = Path();
-    for (int i = 0; i < data.length; i++) {
-      final spacing = size.width / (data.length + 1);
+    for (int i = 0; i < chartData.length; i++) {
+      final spacing = size.width / (chartData.length + 1);
       final x = spacing * (i + 1);
-      final y = size.height * (1 - data[i]);
+      final normalizedValue = maxValue > 0
+          ? chartData[i].value / maxValue
+          : 0.0;
+      final y = size.height * (1 - normalizedValue);
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
         path.lineTo(x, y);
       }
+
+      // Draw dots at data points
+      canvas.drawCircle(Offset(x, y), 4, dotPaint);
     }
+
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 // Transaction data model
