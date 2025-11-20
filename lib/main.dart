@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'core/widgets/index.dart';
 import 'core/di/service_locator.dart';
 import 'core/config/env.dart';
@@ -370,37 +369,7 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
 
                 // Monthly Spending Line Graph - Using modular component
                 const SizedBox(height: 30),
-                SpendingLineChartSection(
-                  chartData: {
-                    ChartPeriod.daily: [
-                      const FlSpot(0, 800),
-                      const FlSpot(1, 1000),
-                      const FlSpot(2, 1800),
-                      const FlSpot(3, 1200),
-                      const FlSpot(4, 900),
-                      const FlSpot(5, 1600),
-                      const FlSpot(6, 1300),
-                    ],
-                    ChartPeriod.weekly: [
-                      const FlSpot(0, 1200),
-                      const FlSpot(1, 1500),
-                      const FlSpot(2, 2000),
-                      const FlSpot(3, 1700),
-                      const FlSpot(4, 1400),
-                      const FlSpot(5, 1900),
-                      const FlSpot(6, 1600),
-                    ],
-                    ChartPeriod.monthly: [
-                      const FlSpot(0, 1500),
-                      const FlSpot(1, 1800),
-                      const FlSpot(2, 2200),
-                      const FlSpot(3, 2000),
-                      const FlSpot(4, 1700),
-                      const FlSpot(5, 2100),
-                      const FlSpot(6, 1900),
-                    ],
-                  },
-                ),
+                const SpendingLineChartSection(),
 
                 // Expenses Section - Using modular component
                 const SizedBox(height: 30),

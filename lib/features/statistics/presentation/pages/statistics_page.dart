@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../widgets/statistics_chart_section.dart';
 import '../widgets/income_expenses_section.dart';
 import '../widgets/income_value_section.dart';
@@ -33,40 +32,7 @@ class StatisticsPage extends StatelessWidget {
                 const SizedBox(height: 30),
 
                 // Statistics Chart Section
-                StatisticsChartSection(
-                  chartData: {
-                    StatsPeriod.daily: [
-                      const FlSpot(0, 800),
-                      const FlSpot(1, 1200),
-                      const FlSpot(2, 1500),
-                      const FlSpot(3, 900),
-                      const FlSpot(4, 1800),
-                      const FlSpot(5, 1300),
-                      const FlSpot(6, 2000),
-                    ],
-                    StatsPeriod.weekly: [
-                      const FlSpot(0, 1200),
-                      const FlSpot(1, 1500),
-                      const FlSpot(2, 1800),
-                      const FlSpot(3, 1400),
-                    ],
-                    StatsPeriod.monthly: [
-                      const FlSpot(0, 1500),
-                      const FlSpot(1, 1800),
-                      const FlSpot(2, 2100),
-                      const FlSpot(3, 1700),
-                      const FlSpot(4, 2000),
-                      const FlSpot(5, 2200),
-                    ],
-                    StatsPeriod.yearly: [
-                      const FlSpot(0, 1000),
-                      const FlSpot(1, 1400),
-                      const FlSpot(2, 1800),
-                      const FlSpot(3, 2100),
-                      const FlSpot(4, 2300),
-                    ],
-                  },
-                ),
+                const StatisticsChartSection(),
 
                 const SizedBox(height: 30),
 
