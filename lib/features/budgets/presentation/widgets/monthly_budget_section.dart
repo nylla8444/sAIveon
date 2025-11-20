@@ -1,13 +1,131 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import '../../../../core/di/service_locator.dart';
+import '../../domain/entities/budget_entity.dart';
 
-class MonthlyBudgetSection extends StatelessWidget {
+class MonthlyBudgetSection extends StatefulWidget {
+  final VoidCallback? onSeeAllTap;
+
+  const MonthlyBudgetSection({super.key, this.onSeeAllTap});
+
+  @override
+  State<MonthlyBudgetSection> createState() => _MonthlyBudgetSectionState();
+}
+
+class _MonthlyBudgetSectionState extends State<MonthlyBudgetSection> {
+  Stream<Map<String, dynamic>> _getMonthlyBudgetStream(
+    ServiceLocator locator,
+    int month,
+    int year,
+  ) async* {
+    final startDate = DateTime(year, month, 1);
+    final endDate = DateTime(year, month + 1, 0, 23, 59, 59);
+
+    // Helper function to calculate spending
+    Future<double> calculateSpending() async {
+      final allTransactions = await locator.transactionRepository
+          .watchAllTransactions()
+          .first;
+
+      double spending = 0.0;
+      for (var tx in allTransactions) {
+        if (!tx.isDeleted &&
+            tx.type == 'send' &&
+            tx.date.isAfter(startDate) &&
+            tx.date.isBefore(endDate)) {
+          spending += tx.amount;
+        }
+      }
+      return spending;
+    }
+
+    // Get or create monthly budget
+    final budget = await locator.budgetRepository.getOrCreateMonthlyBudget(
+      month,
+      year,
+    );
+
+    // Calculate initial spending
+    final spending = await calculateSpending();
+
+    yield {'budget': budget, 'spent': spending};
+
+    // Watch for both budget and transaction changes
+    final budgetStream = locator.budgetRepository.watchAllBudgets();
+    final transactionStream = locator.transactionRepository
+        .watchAllTransactions();
+
+    // Merge streams manually
+    await for (final _ in _mergeStreams([budgetStream, transactionStream])) {
+      final updatedBudget = await locator.budgetRepository
+          .getOrCreateMonthlyBudget(month, year);
+      final updatedSpending = await calculateSpending();
+
+      yield {'budget': updatedBudget, 'spent': updatedSpending};
+    }
+  }
+
+  Stream<dynamic> _mergeStreams(List<Stream<dynamic>> streams) async* {
+    final controllers = <StreamSubscription>[];
+    final streamController = StreamController<dynamic>.broadcast();
+
+    for (final stream in streams) {
+      controllers.add(
+        stream.listen(
+          (event) => streamController.add(event),
+          onError: streamController.addError,
+        ),
+      );
+    }
+
+    await for (final event in streamController.stream) {
+      yield event;
+    }
+
+    for (final controller in controllers) {
+      await controller.cancel();
+    }
+    await streamController.close();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final locator = ServiceProvider.of(context);
+    final now = DateTime.now();
+
+    return StreamBuilder(
+      stream: _getMonthlyBudgetStream(locator, now.month, now.year),
+      builder: (context, snapshot) {
+        final double spent;
+        final double limit;
+
+        if (!snapshot.hasData) {
+          spent = 0;
+          limit = 5000;
+        } else {
+          final data = snapshot.data as Map<String, dynamic>;
+          final budget = data['budget'] as BudgetEntity;
+          spent = data['spent'] as double;
+          limit = budget.budgetAmount;
+        }
+
+        return _MonthlyBudgetDisplay(
+          spent: spent,
+          limit: limit,
+          onSeeAllTap: widget.onSeeAllTap,
+        );
+      },
+    );
+  }
+}
+
+class _MonthlyBudgetDisplay extends StatelessWidget {
   final double spent;
   final double limit;
   final VoidCallback? onSeeAllTap;
 
-  const MonthlyBudgetSection({
-    super.key,
+  const _MonthlyBudgetDisplay({
     required this.spent,
     required this.limit,
     this.onSeeAllTap,
