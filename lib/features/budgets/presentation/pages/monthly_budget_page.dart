@@ -298,8 +298,10 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
   }
 
   Widget _buildMonthlyBudgetChart() {
+    final locator = ServiceProvider.of(context);
     final now = DateTime.now();
     final currentMonth = now.month;
+    final currentYear = now.year;
 
     // Generate months from January to current month
     final months = <String>[];
@@ -307,131 +309,196 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
       months.add(_getMonthAbbreviation(i));
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF101010),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.06), width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Monthly Budget',
-            style: TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFFD6D6D6),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              height: 1.366,
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Chart and labels area - scrollable together
-          SizedBox(
-            height: 175, // 152 (chart) + 8 (spacing) + 15 (labels)
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Y-axis labels
-                SizedBox(
-                  width: 50,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildYAxisLabel('\$2,500'),
-                      _buildYAxisLabel('\$2,000'),
-                      _buildYAxisLabel('\$1,500'),
-                      _buildYAxisLabel('\$1,000'),
-                      _buildYAxisLabel('\$500'),
-                      _buildYAxisLabel('\$0'),
-                      const SizedBox(height: 23), // Space for labels below
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 9),
-                // Chart and labels - scrollable together
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      // Auto-scroll to current month after first build
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (_monthlyChartScrollController.hasClients) {
-                          // Calculate scroll position to show current month
-                          // If there are many months, scroll to the end to show recent months
-                          final maxScroll = _monthlyChartScrollController
-                              .position
-                              .maxScrollExtent;
-                          if (maxScroll > 0) {
-                            _monthlyChartScrollController.animateTo(
-                              maxScroll,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeOut,
-                            );
-                          }
-                        }
-                      });
+    return StreamBuilder<List<dynamic>>(
+      stream: locator.transactionRepository.watchAllTransactions(),
+      builder: (context, txSnapshot) {
+        return StreamBuilder<List<dynamic>>(
+          stream: locator.budgetRepository.watchAllBudgets(),
+          builder: (context, budgetSnapshot) {
+            // Calculate data for each month
+            final List<double> incomeData = [];
+            final List<double> spendingData = [];
 
-                      return SingleChildScrollView(
-                        controller: _monthlyChartScrollController,
-                        scrollDirection: Axis.horizontal,
-                        child: SizedBox(
-                          width: months.length * 50.0, // 50px per month
+            for (int month = 1; month <= currentMonth; month++) {
+              final startDate = DateTime(currentYear, month, 1);
+              final endDate = DateTime(currentYear, month + 1, 0, 23, 59, 59);
+
+              // Calculate income and spending for this month
+              double income = 0;
+              double spending = 0;
+
+              if (txSnapshot.hasData) {
+                final transactions = txSnapshot.data!;
+                for (var tx in transactions) {
+                  if (!tx.isDeleted &&
+                      tx.date.isAfter(startDate) &&
+                      tx.date.isBefore(endDate)) {
+                    if (tx.type == 'receive') {
+                      income += tx.amount;
+                    } else if (tx.type == 'send') {
+                      spending += tx.amount;
+                    }
+                  }
+                }
+              }
+
+              // Normalize to 0-1 where 1 = max value for chart scaling
+              final maxValue = 2500.0;
+              incomeData.add((income / maxValue).clamp(0.0, 1.0));
+              spendingData.add((spending / maxValue).clamp(0.0, 1.0));
+            }
+
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: const Color(0xFF101010),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.06),
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Monthly Budget',
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      color: Color(0xFFD6D6D6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      height: 1.366,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Chart and labels area - scrollable together
+                  SizedBox(
+                    height: 175, // 152 (chart) + 8 (spacing) + 15 (labels)
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Y-axis labels
+                        SizedBox(
+                          width: 50,
                           child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              // Chart
-                              SizedBox(
-                                height: 152,
-                                child: CustomPaint(
-                                  painter: _MonthlyBudgetChartPainter(
-                                    months.length,
-                                  ),
-                                  child: Container(),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Month labels
-                              SizedBox(
-                                height: 15,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: months.asMap().entries.map((entry) {
-                                    return Text(
-                                      entry.value,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Poppins',
-                                        color: entry.key == months.length - 1
-                                            ? const Color(0xFFBA9BFF)
-                                            : const Color(0xFF949494),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.5,
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
+                              _buildYAxisLabel('\$2,500'),
+                              _buildYAxisLabel('\$2,000'),
+                              _buildYAxisLabel('\$1,500'),
+                              _buildYAxisLabel('\$1,000'),
+                              _buildYAxisLabel('\$500'),
+                              _buildYAxisLabel('\$0'),
+                              const SizedBox(
+                                height: 23,
+                              ), // Space for labels below
                             ],
                           ),
                         ),
-                      );
-                    },
+                        const SizedBox(width: 9),
+                        // Chart and labels - scrollable together
+                        Expanded(
+                          child: Builder(
+                            builder: (context) {
+                              // Auto-scroll to current month after first build
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (_monthlyChartScrollController.hasClients) {
+                                  // Calculate scroll position to show current month
+                                  // If there are many months, scroll to the end to show recent months
+                                  final maxScroll =
+                                      _monthlyChartScrollController
+                                          .position
+                                          .maxScrollExtent;
+                                  if (maxScroll > 0) {
+                                    _monthlyChartScrollController.animateTo(
+                                      maxScroll,
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      curve: Curves.easeOut,
+                                    );
+                                  }
+                                }
+                              });
+
+                              return SingleChildScrollView(
+                                controller: _monthlyChartScrollController,
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: months.length * 50.0, // 50px per month
+                                  child: Column(
+                                    children: [
+                                      // Chart
+                                      SizedBox(
+                                        height: 152,
+                                        child: _InteractiveLineChart(
+                                          incomeData: incomeData,
+                                          spendingData: spendingData,
+                                          months: months,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // Month labels
+                                      SizedBox(
+                                        height: 15,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: months.asMap().entries.map((
+                                            entry,
+                                          ) {
+                                            return Text(
+                                              entry.value,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontFamily: 'Poppins',
+                                                color:
+                                                    entry.key ==
+                                                        months.length - 1
+                                                    ? const Color(0xFFBA9BFF)
+                                                    : const Color(0xFF949494),
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w500,
+                                                height: 1.5,
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                  const SizedBox(height: 15),
+                  // Legend
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLegendItem('Income', const Color(0xFFBA9BFF)),
+                      const SizedBox(width: 16),
+                      _buildLegendItem('Spending', const Color(0xFFFF8282)),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
   Widget _buildLast6PeriodsChart() {
+    final locator = ServiceProvider.of(context);
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
@@ -443,119 +510,198 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
       months.add(_getMonthAbbreviation(date.month));
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF101010),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.06), width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Last 6 periods',
-            style: TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFFD6D6D6),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              height: 1.366,
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Chart area with horizontal scroll
-          SizedBox(
-            height: 134,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // Y-axis labels
-                SizedBox(
-                  width: 50,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildYAxisLabel('\$2,500'),
-                      _buildYAxisLabel('\$2,000'),
-                      _buildYAxisLabel('\$1,500'),
-                      _buildYAxisLabel('\$1,000'),
-                      _buildYAxisLabel('\$500'),
-                      _buildYAxisLabel('\$0'),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 9),
-                // Chart bars - scrollable
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: 6 * 50.0, // 6 months * 50px
-                      child: CustomPaint(
-                        painter: _Last6PeriodsChartPainter(),
-                        child: Container(),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          // X-axis labels - scrollable
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(width: 50),
-              const SizedBox(width: 9),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: 6 * 50.0,
-                    height: 15,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: months.asMap().entries.map((entry) {
-                        return Text(
-                          entry.value,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            color:
-                                entry.key ==
-                                    5 // Last month is highlighted
-                                ? const Color(0xFFBA9BFF)
-                                : const Color(0xFF949494),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            height: 1.5,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+    return StreamBuilder<List<dynamic>>(
+      stream: locator.transactionRepository.watchAllTransactions(),
+      builder: (context, txSnapshot) {
+        return StreamBuilder<List<dynamic>>(
+          stream: locator.budgetRepository.watchAllBudgets(),
+          builder: (context, budgetSnapshot) {
+            // Calculate spending and budget status for last 6 months
+            final List<Map<String, dynamic>> barData = [];
+
+            for (int i = 5; i >= 0; i--) {
+              final date = DateTime(currentYear, currentMonth - i, 1);
+              final startDate = DateTime(date.year, date.month, 1);
+              final endDate = DateTime(
+                date.year,
+                date.month + 1,
+                0,
+                23,
+                59,
+                59,
+              );
+
+              // Get budget for this month
+              double budgetLimit = 5000; // default
+              if (budgetSnapshot.hasData) {
+                final budgets = budgetSnapshot.data!;
+                for (var budget in budgets) {
+                  if (!budget.isDeleted &&
+                      budget.category == 'Monthly Overall' &&
+                      budget.month == date.month &&
+                      budget.year == date.year) {
+                    budgetLimit = budget.budgetAmount;
+                    break;
+                  }
+                }
+              }
+
+              // Calculate spending for this month
+              double spending = 0;
+              if (txSnapshot.hasData) {
+                final transactions = txSnapshot.data!;
+                for (var tx in transactions) {
+                  if (!tx.isDeleted &&
+                      tx.type == 'send' &&
+                      tx.date.isAfter(startDate) &&
+                      tx.date.isBefore(endDate)) {
+                    spending += tx.amount;
+                  }
+                }
+              }
+
+              // Determine status color
+              final percentage = budgetLimit > 0 ? spending / budgetLimit : 0;
+              Color barColor;
+              if (percentage < 0.8) {
+                barColor = const Color(0xFFA882FF); // Within budget
+              } else if (percentage < 1.0) {
+                barColor = const Color(0xFFFFE282); // Risk
+              } else {
+                barColor = const Color(0xFFFF8282); // Overspending
+              }
+
+              // Normalize to 0-1 where 1 = $2500
+              final maxValue = 2500.0;
+              final height = (spending / maxValue).clamp(0.0, 1.0);
+
+              barData.add({
+                'height': height,
+                'color': barColor,
+                'value': '\$${spending.toStringAsFixed(0)}',
+              });
+            }
+
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: const Color(0xFF101010),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.06),
+                  width: 2,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem('Within', const Color(0xFFA882FF)),
-              const SizedBox(width: 16),
-              _buildLegendItem('Risk', const Color(0xFFFFE282)),
-              const SizedBox(width: 16),
-              _buildLegendItem('Overspending', const Color(0xFFFF8282)),
-            ],
-          ),
-        ],
-      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Last 6 periods',
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      color: Color(0xFFD6D6D6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      height: 1.366,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Chart area with horizontal scroll
+                  SizedBox(
+                    height: 134,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Y-axis labels
+                        SizedBox(
+                          width: 50,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              _buildYAxisLabel('\$2,500'),
+                              _buildYAxisLabel('\$2,000'),
+                              _buildYAxisLabel('\$1,500'),
+                              _buildYAxisLabel('\$1,000'),
+                              _buildYAxisLabel('\$500'),
+                              _buildYAxisLabel('\$0'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 9),
+                        // Chart bars - scrollable
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: 6 * 50.0, // 6 months * 50px
+                              child: _InteractiveBarChart(
+                                barData: barData,
+                                months: months,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // X-axis labels - scrollable
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(width: 50),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: 6 * 50.0,
+                            height: 15,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: months.asMap().entries.map((entry) {
+                                return Text(
+                                  entry.value,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    color:
+                                        entry.key ==
+                                            5 // Last month is highlighted
+                                        ? const Color(0xFFBA9BFF)
+                                        : const Color(0xFF949494),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.5,
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Legend
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLegendItem('Within', const Color(0xFFA882FF)),
+                      const SizedBox(width: 16),
+                      _buildLegendItem('Risk', const Color(0xFFFFE282)),
+                      const SizedBox(width: 16),
+                      _buildLegendItem('Overspending', const Color(0xFFFF8282)),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -566,7 +712,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
     final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
     return StreamBuilder<List<dynamic>>(
-      stream: locator.expenseRepository.watchAllExpenses(),
+      stream: locator.transactionRepository.watchAllTransactions(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Container(
@@ -585,29 +731,48 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
           );
         }
 
-        // Filter expenses for current month and group by category
-        final allExpenses = snapshot.data!;
+        // Filter spending transactions for current month and group by category name
+        final allTransactions = snapshot.data!;
         final categoryTotals = <String, double>{};
         double total = 0;
 
-        for (var expense in allExpenses) {
-          if (!expense.isDeleted &&
-              expense.date.isAfter(startDate) &&
-              expense.date.isBefore(endDate)) {
-            categoryTotals[expense.category] =
-                (categoryTotals[expense.category] ?? 0) + expense.amount;
-            total += expense.amount;
+        for (var tx in allTransactions) {
+          if (!tx.isDeleted &&
+              tx.type == 'send' &&
+              tx.date.isAfter(startDate) &&
+              tx.date.isBefore(endDate)) {
+            // Use the transaction name directly as category
+            categoryTotals[tx.name] =
+                (categoryTotals[tx.name] ?? 0) + tx.amount;
+            total += tx.amount;
           }
         }
 
-        // Define category colors
+        // Define category colors for all 9 spending categories
         final categoryColors = {
-          'Shopping': const Color(0xFFFF8282),
-          'Food': const Color(0xFFF982FF),
-          'Groceries': const Color(0xFF82FFB4),
-          'Health': const Color(0xFFA882FF),
-          'Transpo': const Color(0xFFFFF782),
+          'Food & Dining': const Color(0xFFFF8282), // Red
+          'Shopping': const Color(0xFFA882FF), // Purple
+          'Transportation': const Color(0xFF82E5E5), // Cyan
+          'Bills & Utilities': const Color(0xFFFFAD5C), // Orange
+          'Entertainment': const Color(0xFFFFC759), // Yellow
+          'Healthcare': const Color(0xFF82FFB4), // Green
+          'Education': const Color(0xFFFF82D4), // Pink
+          'Groceries': const Color(0xFFB8B88F), // Beige
+          'Other Expenses': const Color(0xFF949494), // Gray
         };
+
+        // Define the order of categories (all 9 spending categories)
+        final categoryOrder = [
+          'Food & Dining',
+          'Shopping',
+          'Transportation',
+          'Bills & Utilities',
+          'Entertainment',
+          'Healthcare',
+          'Education',
+          'Groceries',
+          'Other Expenses',
+        ];
 
         return Container(
           width: double.infinity,
@@ -645,6 +810,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
                           painter: _DonutChartPainter(
                             categoryTotals,
                             categoryColors,
+                            categoryOrder,
                           ),
                         ),
                         Column(
@@ -676,36 +842,24 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
                     ),
                   ),
                   const SizedBox(width: 34),
-                  // Legend - always show all categories
+                  // Legend - show all categories with percentages
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildExpenseLegendItem(
-                          'Shopping',
-                          categoryColors['Shopping']!,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildExpenseLegendItem(
-                          'Food',
-                          categoryColors['Food']!,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildExpenseLegendItem(
-                          'Groceries',
-                          categoryColors['Groceries']!,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildExpenseLegendItem(
-                          'Health',
-                          categoryColors['Health']!,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildExpenseLegendItem(
-                          'Transpo',
-                          categoryColors['Transpo']!,
-                        ),
-                      ],
+                      children: categoryOrder.map((category) {
+                        final amount = categoryTotals[category] ?? 0;
+                        final percentage = total > 0
+                            ? (amount / total * 100).toDouble()
+                            : 0.0;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _buildExpenseLegendItemWithPercentage(
+                            category,
+                            categoryColors[category] ?? const Color(0xFF949494),
+                            percentage,
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ],
@@ -714,6 +868,35 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildExpenseLegendItemWithPercentage(
+    String label,
+    Color color,
+    double percentage,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            '$label ${percentage.toStringAsFixed(0)}%',
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              color: Color(0xFFD6D6D6),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              height: 1.366,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -774,72 +957,317 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
       ],
     );
   }
+}
 
-  Widget _buildExpenseLegendItem(String label, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Manrope',
-            color: Color(0xFFD6D6D6),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            height: 1.366,
+// Interactive Line Chart Widget with tap detection
+class _InteractiveLineChart extends StatefulWidget {
+  final List<double> incomeData;
+  final List<double> spendingData;
+  final List<String> months;
+
+  const _InteractiveLineChart({
+    required this.incomeData,
+    required this.spendingData,
+    required this.months,
+  });
+
+  @override
+  State<_InteractiveLineChart> createState() => _InteractiveLineChartState();
+}
+
+class _InteractiveLineChartState extends State<_InteractiveLineChart> {
+  int? _selectedIndex;
+  Offset? _tapPosition;
+
+  void _handleTapDown(TapDownDetails details, Size size) {
+    final localPosition = details.localPosition;
+
+    // Calculate which data point was tapped
+    final spacing = size.width / (widget.months.length + 1);
+
+    for (int i = 0; i < widget.months.length; i++) {
+      final x = spacing * (i + 1);
+      final incomeY = size.height * (1 - widget.incomeData[i]);
+      final spendingY = size.height * (1 - widget.spendingData[i]);
+
+      // Check if tap is near income or spending point (within 20px radius)
+      final distanceToIncome = (localPosition - Offset(x, incomeY)).distance;
+      final distanceToSpending =
+          (localPosition - Offset(x, spendingY)).distance;
+
+      if (distanceToIncome < 20 || distanceToSpending < 20) {
+        setState(() {
+          _selectedIndex = i;
+          _tapPosition = localPosition;
+        });
+
+        // Auto-hide after 3 seconds
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted && _selectedIndex == i) {
+            setState(() {
+              _selectedIndex = null;
+              _tapPosition = null;
+            });
+          }
+        });
+        break;
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onTapDown: (details) => _handleTapDown(details, constraints.biggest),
+          child: Stack(
+            children: [
+              CustomPaint(
+                size: constraints.biggest,
+                painter: _MonthlyBudgetChartPainter(
+                  widget.incomeData,
+                  widget.spendingData,
+                ),
+              ),
+              if (_selectedIndex != null && _tapPosition != null)
+                Positioned(
+                  left: _tapPosition!.dx - 60,
+                  top: _tapPosition!.dy - 60,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFA882FF),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.months[_selectedIndex!],
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Color(0xFFD6D6D6),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFBA9BFF),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '\$${(widget.incomeData[_selectedIndex!] * 2500).toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                color: Color(0xFFBA9BFF),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFF8282),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '\$${(widget.spendingData[_selectedIndex!] * 2500).toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                color: Color(0xFFFF8282),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
 
-// Custom painter for Monthly Budget chart
-class _MonthlyBudgetChartPainter extends CustomPainter {
-  final int monthCount;
+// Interactive Bar Chart Widget with tap detection
+class _InteractiveBarChart extends StatefulWidget {
+  final List<Map<String, dynamic>> barData;
+  final List<String> months;
 
-  _MonthlyBudgetChartPainter(this.monthCount);
+  const _InteractiveBarChart({required this.barData, required this.months});
+
+  @override
+  State<_InteractiveBarChart> createState() => _InteractiveBarChartState();
+}
+
+class _InteractiveBarChartState extends State<_InteractiveBarChart> {
+  int? _selectedIndex;
+  Offset? _tapPosition;
+
+  void _handleTapDown(TapDownDetails details, Size size) {
+    final localPosition = details.localPosition;
+    final barWidth = 16.0;
+
+    for (int i = 0; i < widget.barData.length; i++) {
+      final spacing = size.width / (widget.barData.length + 1);
+      final centerX = spacing * (i + 1);
+      final x = centerX - (barWidth / 2);
+      final barHeight = size.height * (widget.barData[i]['height'] as double);
+
+      // Check if tap is within bar bounds
+      if (localPosition.dx >= x &&
+          localPosition.dx <= x + barWidth &&
+          localPosition.dy >= size.height - barHeight &&
+          localPosition.dy <= size.height) {
+        setState(() {
+          _selectedIndex = i;
+          _tapPosition = Offset(centerX, size.height - barHeight - 10);
+        });
+
+        // Auto-hide after 3 seconds
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted && _selectedIndex == i) {
+            setState(() {
+              _selectedIndex = null;
+              _tapPosition = null;
+            });
+          }
+        });
+        break;
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onTapDown: (details) => _handleTapDown(details, constraints.biggest),
+          child: Stack(
+            children: [
+              CustomPaint(
+                size: constraints.biggest,
+                painter: _Last6PeriodsChartPainter(widget.barData),
+              ),
+              if (_selectedIndex != null && _tapPosition != null)
+                Positioned(
+                  left: _tapPosition!.dx - 40,
+                  top: _tapPosition!.dy - 35,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color:
+                            widget.barData[_selectedIndex!]['color'] as Color,
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.months[_selectedIndex!],
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Color(0xFFD6D6D6),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          widget.barData[_selectedIndex!]['value'] as String,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color:
+                                widget.barData[_selectedIndex!]['color']
+                                    as Color,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Custom painter for Monthly Budget chart with real data
+class _MonthlyBudgetChartPainter extends CustomPainter {
+  final List<double> incomeData;
+  final List<double> spendingData;
+
+  _MonthlyBudgetChartPainter(this.incomeData, this.spendingData);
 
   @override
   void paint(Canvas canvas, Size size) {
     final width = size.width;
     final height = size.height;
 
-    // Generate data points for available months (using sample data)
-    // Normalized to 0-1 where 1 = $2500
-    final budgetData = List<double>.generate(
-      monthCount,
-      (i) => 0.48 + (i * 0.05), // Sample increasing pattern
-    );
+    if (incomeData.isEmpty || spendingData.isEmpty) {
+      return; // Nothing to draw
+    }
 
-    final spendingData = List<double>.generate(
-      monthCount,
-      (i) => 0.36 + (i * 0.05), // Sample increasing pattern
-    );
-
-    // Draw purple budget line
-    final budgetPaint = Paint()
+    // Draw purple income line
+    final incomePaint = Paint()
       ..color = const Color(0xFFBA9BFF)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
-    final budgetPath = Path();
-    for (int i = 0; i < budgetData.length; i++) {
-      final spacing = width / (budgetData.length + 1);
+    final incomePath = Path();
+    for (int i = 0; i < incomeData.length; i++) {
+      final spacing = width / (incomeData.length + 1);
       final x = spacing * (i + 1);
-      final y = height * (1 - budgetData[i]);
+      final y = height * (1 - incomeData[i]);
       if (i == 0) {
-        budgetPath.moveTo(x, y);
+        incomePath.moveTo(x, y);
       } else {
-        budgetPath.lineTo(x, y);
+        incomePath.lineTo(x, y);
       }
     }
-    canvas.drawPath(budgetPath, budgetPaint);
+    canvas.drawPath(incomePath, incomePaint);
 
     // Draw red spending line
     final spendingPaint = Paint()
@@ -849,7 +1277,6 @@ class _MonthlyBudgetChartPainter extends CustomPainter {
 
     final spendingPath = Path();
     for (int i = 0; i < spendingData.length; i++) {
-      // Use spaceEvenly logic: equal spacing on both sides and between items
       final spacing = width / (spendingData.length + 1);
       final x = spacing * (i + 1);
       final y = height * (1 - spendingData[i]);
@@ -861,15 +1288,15 @@ class _MonthlyBudgetChartPainter extends CustomPainter {
     }
     canvas.drawPath(spendingPath, spendingPaint);
 
-    // Draw circles at data points for purple line
+    // Draw circles at data points for purple income line
     final circlePaint = Paint()
       ..color = const Color(0xFFBA9BFF)
       ..style = PaintingStyle.fill;
 
-    for (int i = 0; i < budgetData.length; i++) {
-      final spacing = width / (budgetData.length + 1);
+    for (int i = 0; i < incomeData.length; i++) {
+      final spacing = width / (incomeData.length + 1);
       final x = spacing * (i + 1);
-      final y = height * (1 - budgetData[i]);
+      final y = height * (1 - incomeData[i]);
       canvas.drawCircle(Offset(x, y), 3, circlePaint);
     }
 
@@ -884,54 +1311,28 @@ class _MonthlyBudgetChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// Custom painter for Last 6 Periods chart
+// Custom painter for Last 6 Periods chart with real data
 class _Last6PeriodsChartPainter extends CustomPainter {
+  final List<Map<String, dynamic>> barData;
+
+  _Last6PeriodsChartPainter(this.barData);
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
-
     final barWidth = 16.0;
 
-    // Bar data with actual values (max $2500)
-    final bars = [
-      {
-        'height': 0.58,
-        'color': const Color(0xFFA882FF),
-        'value': '\$1,450',
-      }, // Jan - Within ($1450)
-      {
-        'height': 0.83,
-        'color': const Color(0xFFFF8282),
-        'value': '\$2,075',
-      }, // Feb - Overspending ($2075)
-      {
-        'height': 0.69,
-        'color': const Color(0xFFFFE282),
-        'value': '\$1,725',
-      }, // Mar - Risk ($1725)
-      {
-        'height': 0.64,
-        'color': const Color(0xFFA882FF),
-        'value': '\$1,600',
-      }, // Apr - Within ($1600)
-      {
-        'height': 0.58,
-        'color': const Color(0xFFA882FF),
-        'value': '\$1,450',
-      }, // May - Within ($1450)
-      {
-        'height': 0.50,
-        'color': const Color(0xFFA882FF),
-        'value': '\$1,250',
-      }, // Jun - Within ($1250)
-    ];
+    final bars = barData.isNotEmpty
+        ? barData
+        : [
+            {'height': 0.5, 'color': const Color(0xFFA882FF), 'value': '\$0'},
+          ];
 
     for (int i = 0; i < bars.length; i++) {
       // Position bars to match MainAxisAlignment.spaceEvenly
-      // Equal spacing on both sides and between all items
       final spacing = size.width / (bars.length + 1);
       final centerX = spacing * (i + 1);
       final x = centerX - (barWidth / 2);
@@ -949,15 +1350,20 @@ class _Last6PeriodsChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 // Custom painter for Donut chart
 class _DonutChartPainter extends CustomPainter {
   final Map<String, double> categoryTotals;
   final Map<String, Color> categoryColors;
+  final List<String> categoryOrder;
 
-  _DonutChartPainter(this.categoryTotals, this.categoryColors);
+  _DonutChartPainter(
+    this.categoryTotals,
+    this.categoryColors,
+    this.categoryOrder,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -981,27 +1387,30 @@ class _DonutChartPainter extends CustomPainter {
       return;
     }
 
-    // Calculate total and percentages
+    // Calculate total
     final total = categoryTotals.values.fold<double>(
       0,
       (sum, val) => sum + val,
     );
     var startAngle = -90.0; // Start at top
 
-    // Draw each category segment
-    for (var entry in categoryTotals.entries) {
-      final sweepAngle = (entry.value / total) * 360;
-      paint.color = categoryColors[entry.key] ?? const Color(0xFF949494);
+    // Draw each category segment in the specified order
+    for (var category in categoryOrder) {
+      final value = categoryTotals[category] ?? 0;
+      if (value > 0) {
+        final sweepAngle = (value / total) * 360;
+        paint.color = categoryColors[category] ?? const Color(0xFF949494);
 
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle * (3.14159 / 180),
-        sweepAngle * (3.14159 / 180),
-        false,
-        paint,
-      );
+        canvas.drawArc(
+          Rect.fromCircle(center: center, radius: radius),
+          startAngle * (3.14159 / 180),
+          sweepAngle * (3.14159 / 180),
+          false,
+          paint,
+        );
 
-      startAngle += sweepAngle;
+        startAngle += sweepAngle;
+      }
     }
   }
 
