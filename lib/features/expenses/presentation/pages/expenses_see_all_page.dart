@@ -151,10 +151,10 @@ class _ExpensesSeeAllPageState extends State<ExpensesSeeAllPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildFilterTab('Daily', TimePeriod.daily),
-                      _buildFilterTab('Weekly', TimePeriod.weekly),
-                      _buildFilterTab('Monthly', TimePeriod.monthly),
-                      _buildFilterTab('Yearly', TimePeriod.yearly),
+                      _buildFilterTab('This Day', TimePeriod.daily),
+                      _buildFilterTab('This Week', TimePeriod.weekly),
+                      _buildFilterTab('This Month', TimePeriod.monthly),
+                      _buildFilterTab('This Year', TimePeriod.yearly),
                     ],
                   ),
                 ),
