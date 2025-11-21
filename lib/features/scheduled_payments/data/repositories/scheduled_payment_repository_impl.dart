@@ -16,6 +16,20 @@ class ScheduledPaymentRepositoryImpl implements IScheduledPaymentRepository {
   }
 
   @override
+  Future<List<ScheduledPaymentEntity>> getUpcomingPayments(
+    int daysAhead,
+  ) async {
+    final payments = await _database.getUpcomingPayments(daysAhead);
+    return ScheduledPaymentMapper.toDomainList(payments);
+  }
+
+  @override
+  Future<ScheduledPaymentEntity?> getScheduledPaymentById(int id) async {
+    final payment = await _database.getScheduledPaymentById(id);
+    return payment != null ? ScheduledPaymentMapper.toDomain(payment) : null;
+  }
+
+  @override
   Future<int> addScheduledPayment(ScheduledPaymentEntity payment) async {
     final companion = ScheduledPaymentMapper.toCompanion(payment);
     return await _database.insertScheduledPayment(companion);

@@ -386,84 +386,46 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
 
                 // Scheduled Payments - Using modular component
                 const SizedBox(height: 30),
-                ScheduledPaymentsSection(
-                  payments: [
-                    ScheduledPaymentData(
-                      title: 'Car Insurance',
-                      amount: '-\$65',
-                      status: 'Due date in 15 days',
-                      date: '12 Oct',
-                      isOverdue: false,
-                      icon: Icons.drive_eta,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const ScheduledPaymentDetailPage(
-                                  title: 'Car Insurance',
-                                  amount: '-\$65',
-                                  status: 'Due date in 15 days',
-                                  date: '12 Oct',
-                                  icon: Icons.drive_eta,
-                                ),
-                          ),
+                Builder(
+                  builder: (context) {
+                    final locator = ServiceProvider.of(context);
+                    return StreamBuilder(
+                      stream: locator.scheduledPaymentRepository
+                          .watchAllScheduledPayments(),
+                      builder: (context, snapshot) {
+                        final payments = snapshot.data ?? [];
+                        // Filter out deleted payments and sort by date
+                        final activePayments =
+                            payments.where((p) => !p.isDeleted).toList()..sort(
+                              (a, b) => a.nextPaymentDate.compareTo(
+                                b.nextPaymentDate,
+                              ),
+                            );
+
+                        return ScheduledPaymentsSection(
+                          payments: activePayments,
+                          onSeeAllTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ScheduledPaymentsPage(),
+                              ),
+                            );
+                          },
+                          onPaymentTap: (payment) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ScheduledPaymentDetailPage(
+                                      paymentId: payment.id!,
+                                    ),
+                              ),
+                            );
+                          },
                         );
                       },
-                    ),
-                    ScheduledPaymentData(
-                      title: 'Internet',
-                      amount: '-\$35',
-                      status: 'Overdue',
-                      date: '10 Oct',
-                      isOverdue: true,
-                      icon: Icons.wifi,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const ScheduledPaymentDetailPage(
-                                  title: 'Internet',
-                                  amount: '-\$35',
-                                  status: 'Overdue',
-                                  date: '10 Oct',
-                                  icon: Icons.wifi,
-                                ),
-                          ),
-                        );
-                      },
-                    ),
-                    ScheduledPaymentData(
-                      title: 'Home Service Fee',
-                      amount: '-\$35',
-                      status: 'Overdue',
-                      date: '10 Oct',
-                      isOverdue: true,
-                      icon: Icons.home,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const ScheduledPaymentDetailPage(
-                                  title: 'Home Service Fee',
-                                  amount: '-\$35',
-                                  status: 'Overdue',
-                                  date: '10 Oct',
-                                  icon: Icons.home,
-                                ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                  onSeeAllTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ScheduledPaymentsPage(),
-                      ),
                     );
                   },
                 ),

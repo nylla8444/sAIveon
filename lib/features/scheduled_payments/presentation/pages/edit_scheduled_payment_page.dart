@@ -1,21 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/index.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../domain/entities/scheduled_payment_entity.dart';
 
 class EditScheduledPaymentPage extends StatefulWidget {
-  final String title;
-  final String amount;
-  final String status;
-  final String date;
-  final IconData icon;
+  final int paymentId;
 
-  const EditScheduledPaymentPage({
-    super.key,
-    required this.title,
-    required this.amount,
-    required this.status,
-    required this.date,
-    required this.icon,
-  });
+  const EditScheduledPaymentPage({super.key, required this.paymentId});
 
   @override
   State<EditScheduledPaymentPage> createState() =>
@@ -23,10 +14,21 @@ class EditScheduledPaymentPage extends StatefulWidget {
 }
 
 class _EditScheduledPaymentPageState extends State<EditScheduledPaymentPage> {
-  late TextEditingController _titleController;
-  late TextEditingController _amountController;
-  late TextEditingController _dueDateController;
-  late IconData _selectedIcon;
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _dueDateController = TextEditingController();
+  IconData _selectedIcon = Icons.payment;
+  DateTime? _selectedDate;
+  String _selectedFrequency = 'once';
+  ScheduledPaymentEntity? _payment;
+  bool _isLoading = true;
+
+  final List<Map<String, dynamic>> _frequencyOptions = [
+    {'value': 'once', 'label': 'One Time'},
+    {'value': 'weekly', 'label': 'Weekly'},
+    {'value': 'monthly', 'label': 'Monthly'},
+    {'value': 'yearly', 'label': 'Yearly'},
+  ];
 
   final List<Map<String, dynamic>> _iconOptions = [
     {'icon': Icons.payment, 'label': 'Payment'},
@@ -42,12 +44,85 @@ class _EditScheduledPaymentPageState extends State<EditScheduledPaymentPage> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.title);
-    // Remove the $ and - from amount
-    final cleanAmount = widget.amount.replaceAll(RegExp(r'[^\d.]'), '');
-    _amountController = TextEditingController(text: cleanAmount);
-    _dueDateController = TextEditingController(text: widget.date);
-    _selectedIcon = widget.icon;
+    // Use WidgetsBinding to ensure context is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPaymentData();
+    });
+  }
+
+  Future<void> _loadPaymentData() async {
+    try {
+      final repository = ServiceProvider.of(context).scheduledPaymentRepository;
+      final payment = await repository.getScheduledPaymentById(
+        widget.paymentId,
+      );
+
+      if (payment != null && mounted) {
+        setState(() {
+          _payment = payment;
+          _titleController.text = payment.name;
+          _amountController.text = payment.amount.toStringAsFixed(2);
+          _selectedDate = payment.nextPaymentDate;
+          _selectedFrequency = payment.frequency;
+
+          // Format date display
+          final months = [
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'May',
+            'Jun',
+            'Jul',
+            'Aug',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dec',
+          ];
+          _dueDateController.text =
+              '${payment.nextPaymentDate.day} ${months[payment.nextPaymentDate.month - 1]}';
+
+          // Set icon based on name
+          _selectedIcon = _getIconFromName(payment.name);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading payment: $e'),
+            backgroundColor: const Color(0xFFFF8282),
+          ),
+        );
+      }
+    }
+  }
+
+  IconData _getIconFromName(String name) {
+    final nameLower = name.toLowerCase();
+    if (nameLower.contains('car') || nameLower.contains('vehicle')) {
+      return Icons.directions_car;
+    } else if (nameLower.contains('internet') || nameLower.contains('wifi')) {
+      return Icons.wifi;
+    } else if (nameLower.contains('home') || nameLower.contains('rent')) {
+      return Icons.home;
+    } else if (nameLower.contains('phone') || nameLower.contains('mobile')) {
+      return Icons.phone;
+    } else if (nameLower.contains('electric') || nameLower.contains('power')) {
+      return Icons.electric_bolt;
+    } else if (nameLower.contains('water')) {
+      return Icons.water_drop;
+    } else if (nameLower.contains('insurance') ||
+        nameLower.contains('health')) {
+      return Icons.health_and_safety;
+    } else {
+      return Icons.payment;
+    }
   }
 
   @override
@@ -140,6 +215,61 @@ class _EditScheduledPaymentPageState extends State<EditScheduledPaymentPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF050505),
+        body: const Center(
+          child: CircularProgressIndicator(color: Color(0xFFBA9BFF)),
+        ),
+      );
+    }
+
+    if (_payment == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF050505),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    CustomBackButton(
+                      size: 40,
+                      backgroundColor: const Color(0xFF2A2A2A),
+                      iconColor: const Color(0xFFFFFFFF),
+                    ),
+                    const SizedBox(width: 15),
+                    const Text(
+                      'Edit Payment',
+                      style: TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+                const Expanded(
+                  child: Center(
+                    child: Text(
+                      'Payment not found',
+                      style: TextStyle(
+                        color: Color(0xFF949494),
+                        fontSize: 16,
+                        fontFamily: 'Manrope',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       body: SafeArea(
@@ -345,6 +475,64 @@ class _EditScheduledPaymentPageState extends State<EditScheduledPaymentPage> {
 
                 const SizedBox(height: 24),
 
+                // Frequency
+                const Text(
+                  'Frequency',
+                  style: TextStyle(
+                    color: Color(0xFFD6D6D6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Manrope',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF191919),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFD6D6D6).withOpacity(0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedFrequency,
+                      isExpanded: true,
+                      dropdownColor: const Color(0xFF191919),
+                      icon: const Padding(
+                        padding: EdgeInsets.only(right: 15),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Color(0xFF949494),
+                        ),
+                      ),
+                      style: const TextStyle(
+                        color: Color(0xFFD6D6D6),
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      items: _frequencyOptions.map((option) {
+                        return DropdownMenuItem<String>(
+                          value: option['value'] as String,
+                          child: Text(option['label'] as String),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedFrequency = newValue;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
                 // Due Date
                 const Text(
                   'Due Date',
@@ -380,6 +568,7 @@ class _EditScheduledPaymentPageState extends State<EditScheduledPaymentPage> {
                     );
                     if (pickedDate != null) {
                       setState(() {
+                        _selectedDate = pickedDate;
                         // Format as "15 Dec"
                         final months = [
                           'Jan',
@@ -446,21 +635,46 @@ class _EditScheduledPaymentPageState extends State<EditScheduledPaymentPage> {
 
                 // Save button
                 GestureDetector(
-                  onTap: () {
-                    // TODO: Save data when backend is ready
+                  onTap: () async {
                     if (_titleController.text.isNotEmpty &&
                         _amountController.text.isNotEmpty &&
-                        _dueDateController.text.isNotEmpty) {
-                      // Show success message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Payment updated! (Backend pending)'),
-                          backgroundColor: Color(0xFFBA9BFF),
-                        ),
-                      );
-                      // Pop twice to go back to main page
-                      Navigator.pop(context);
-                      Navigator.pop(context);
+                        _selectedDate != null) {
+                      try {
+                        final repository = ServiceProvider.of(
+                          context,
+                        ).scheduledPaymentRepository;
+
+                        final updatedPayment = _payment!.copyWith(
+                          name: _titleController.text,
+                          amount: double.parse(_amountController.text),
+                          frequency: _selectedFrequency,
+                          nextPaymentDate: _selectedDate,
+                        );
+
+                        await repository.updateScheduledPayment(updatedPayment);
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Payment updated successfully!'),
+                              backgroundColor: Color(0xFFBA9BFF),
+                            ),
+                          );
+                          Navigator.pop(
+                            context,
+                            true,
+                          ); // Return true to indicate success
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error updating payment: $e'),
+                              backgroundColor: const Color(0xFFFF8282),
+                            ),
+                          );
+                        }
+                      }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -532,19 +746,43 @@ class _EditScheduledPaymentPageState extends State<EditScheduledPaymentPage> {
                               ),
                             ),
                             TextButton(
-                              onPressed: () {
-                                // TODO: Delete from backend
-                                Navigator.pop(context); // Close dialog
-                                Navigator.pop(context); // Close edit page
-                                Navigator.pop(context); // Close detail page
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Payment deleted! (Backend pending)',
-                                    ),
-                                    backgroundColor: Color(0xFFFF8282),
-                                  ),
-                                );
+                              onPressed: () async {
+                                try {
+                                  final repository = ServiceProvider.of(
+                                    context,
+                                  ).scheduledPaymentRepository;
+                                  await repository.deleteScheduledPayment(
+                                    _payment!.id!,
+                                  );
+
+                                  if (mounted) {
+                                    Navigator.pop(context); // Close dialog
+                                    Navigator.pop(context); // Close edit page
+                                    Navigator.pop(context); // Close detail page
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Payment deleted successfully!',
+                                        ),
+                                        backgroundColor: Color(0xFFFF8282),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    Navigator.pop(context); // Close dialog
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Error deleting payment: $e',
+                                        ),
+                                        backgroundColor: const Color(
+                                          0xFFFF8282,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
                               },
                               child: const Text(
                                 'Delete',

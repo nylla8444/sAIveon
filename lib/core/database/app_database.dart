@@ -54,6 +54,10 @@ class Transactions extends Table {
     Banks,
     #id,
   )(); // destination bank for transfers
+  IntColumn get scheduledPaymentId => integer().nullable().references(
+    ScheduledPayments,
+    #id,
+  )(); // link to scheduled payment
   DateTimeColumn get date => dateTime().withDefault(currentDateAndTime)();
   TextColumn get serverId => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -82,6 +86,10 @@ class ScheduledPayments extends Table {
   TextColumn get frequency =>
       text().withLength(min: 1, max: 20)(); // 'weekly', 'monthly', etc.
   DateTimeColumn get nextPaymentDate => dateTime()();
+  IntColumn get expenseId => integer().nullable().references(
+    Expenses,
+    #id,
+  )(); // link to spending category
   IntColumn get bankId => integer().nullable().references(Banks, #id)();
   TextColumn get serverId => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -162,7 +170,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -174,6 +182,30 @@ class AppDatabase extends _$AppDatabase {
         if (from == 1 && to == 2) {
           // Add toBankId column to transactions table for transfer support
           await m.addColumn(transactions, transactions.toBankId);
+        }
+        if (from == 2 && to == 3) {
+          // Add scheduledPaymentId column to transactions table
+          await m.addColumn(transactions, transactions.scheduledPaymentId);
+        }
+        if (from == 3 && to == 4) {
+          // Add expenseId column to scheduled_payments table
+          await m.addColumn(scheduledPayments, scheduledPayments.expenseId);
+        }
+        if (from == 1 && to == 3) {
+          // Upgrade from version 1 to 3
+          await m.addColumn(transactions, transactions.toBankId);
+          await m.addColumn(transactions, transactions.scheduledPaymentId);
+        }
+        if (from == 1 && to == 4) {
+          // Upgrade from version 1 to 4
+          await m.addColumn(transactions, transactions.toBankId);
+          await m.addColumn(transactions, transactions.scheduledPaymentId);
+          await m.addColumn(scheduledPayments, scheduledPayments.expenseId);
+        }
+        if (from == 2 && to == 4) {
+          // Upgrade from version 2 to 4
+          await m.addColumn(transactions, transactions.scheduledPaymentId);
+          await m.addColumn(scheduledPayments, scheduledPayments.expenseId);
         }
       },
     );
@@ -286,6 +318,32 @@ class AppDatabase extends _$AppDatabase {
     )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
+  Future<List<Transaction>> getTransactionsByScheduledPayment(
+    int scheduledPaymentId,
+  ) {
+    return (select(transactions)
+          ..where(
+            (tbl) =>
+                tbl.scheduledPaymentId.equals(scheduledPaymentId) &
+                tbl.isDeleted.equals(false),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.date)]))
+        .get();
+  }
+
+  Stream<List<Transaction>> watchTransactionsByScheduledPayment(
+    int scheduledPaymentId,
+  ) {
+    return (select(transactions)
+          ..where(
+            (tbl) =>
+                tbl.scheduledPaymentId.equals(scheduledPaymentId) &
+                tbl.isDeleted.equals(false),
+          )
+          ..orderBy([(t) => OrderingTerm.desc(t.date)]))
+        .watch();
+  }
+
   // ============================================================================
   // Query Methods - Budgets
   // ============================================================================
@@ -331,6 +389,25 @@ class AppDatabase extends _$AppDatabase {
     return (select(
       scheduledPayments,
     )..where((tbl) => tbl.isDeleted.equals(false))).watch();
+  }
+
+  Future<List<ScheduledPayment>> getUpcomingPayments(int daysAhead) {
+    final now = DateTime.now();
+    final futureDate = now.add(Duration(days: daysAhead));
+
+    return (select(scheduledPayments)..where(
+          (tbl) =>
+              tbl.isDeleted.equals(false) &
+              tbl.nextPaymentDate.isBiggerOrEqualValue(now) &
+              tbl.nextPaymentDate.isSmallerOrEqualValue(futureDate),
+        ))
+        .get();
+  }
+
+  Future<ScheduledPayment?> getScheduledPaymentById(int id) {
+    return (select(
+      scheduledPayments,
+    )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
   Future<int> insertScheduledPayment(ScheduledPaymentsCompanion payment) {

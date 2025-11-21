@@ -1309,6 +1309,667 @@ class ExpensesCompanion extends UpdateCompanion<Expense> {
   }
 }
 
+class $ScheduledPaymentsTable extends ScheduledPayments
+    with TableInfo<$ScheduledPaymentsTable, ScheduledPayment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ScheduledPaymentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 100,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _frequencyMeta = const VerificationMeta(
+    'frequency',
+  );
+  @override
+  late final GeneratedColumn<String> frequency = GeneratedColumn<String>(
+    'frequency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 20,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nextPaymentDateMeta = const VerificationMeta(
+    'nextPaymentDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextPaymentDate =
+      GeneratedColumn<DateTime>(
+        'next_payment_date',
+        aliasedName,
+        false,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _expenseIdMeta = const VerificationMeta(
+    'expenseId',
+  );
+  @override
+  late final GeneratedColumn<int> expenseId = GeneratedColumn<int>(
+    'expense_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES expenses (id)',
+    ),
+  );
+  static const VerificationMeta _bankIdMeta = const VerificationMeta('bankId');
+  @override
+  late final GeneratedColumn<int> bankId = GeneratedColumn<int>(
+    'bank_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES banks (id)',
+    ),
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    amount,
+    frequency,
+    nextPaymentDate,
+    expenseId,
+    bankId,
+    serverId,
+    createdAt,
+    updatedAt,
+    isDeleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'scheduled_payments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ScheduledPayment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('frequency')) {
+      context.handle(
+        _frequencyMeta,
+        frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_frequencyMeta);
+    }
+    if (data.containsKey('next_payment_date')) {
+      context.handle(
+        _nextPaymentDateMeta,
+        nextPaymentDate.isAcceptableOrUnknown(
+          data['next_payment_date']!,
+          _nextPaymentDateMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_nextPaymentDateMeta);
+    }
+    if (data.containsKey('expense_id')) {
+      context.handle(
+        _expenseIdMeta,
+        expenseId.isAcceptableOrUnknown(data['expense_id']!, _expenseIdMeta),
+      );
+    }
+    if (data.containsKey('bank_id')) {
+      context.handle(
+        _bankIdMeta,
+        bankId.isAcceptableOrUnknown(data['bank_id']!, _bankIdMeta),
+      );
+    }
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ScheduledPayment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ScheduledPayment(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      )!,
+      frequency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}frequency'],
+      )!,
+      nextPaymentDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_payment_date'],
+      )!,
+      expenseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}expense_id'],
+      ),
+      bankId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bank_id'],
+      ),
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $ScheduledPaymentsTable createAlias(String alias) {
+    return $ScheduledPaymentsTable(attachedDatabase, alias);
+  }
+}
+
+class ScheduledPayment extends DataClass
+    implements Insertable<ScheduledPayment> {
+  final int id;
+  final String name;
+  final double amount;
+  final String frequency;
+  final DateTime nextPaymentDate;
+  final int? expenseId;
+  final int? bankId;
+  final String? serverId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final bool isDeleted;
+  const ScheduledPayment({
+    required this.id,
+    required this.name,
+    required this.amount,
+    required this.frequency,
+    required this.nextPaymentDate,
+    this.expenseId,
+    this.bankId,
+    this.serverId,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isDeleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['amount'] = Variable<double>(amount);
+    map['frequency'] = Variable<String>(frequency);
+    map['next_payment_date'] = Variable<DateTime>(nextPaymentDate);
+    if (!nullToAbsent || expenseId != null) {
+      map['expense_id'] = Variable<int>(expenseId);
+    }
+    if (!nullToAbsent || bankId != null) {
+      map['bank_id'] = Variable<int>(bankId);
+    }
+    if (!nullToAbsent || serverId != null) {
+      map['server_id'] = Variable<String>(serverId);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    return map;
+  }
+
+  ScheduledPaymentsCompanion toCompanion(bool nullToAbsent) {
+    return ScheduledPaymentsCompanion(
+      id: Value(id),
+      name: Value(name),
+      amount: Value(amount),
+      frequency: Value(frequency),
+      nextPaymentDate: Value(nextPaymentDate),
+      expenseId: expenseId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expenseId),
+      bankId: bankId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bankId),
+      serverId: serverId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverId),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      isDeleted: Value(isDeleted),
+    );
+  }
+
+  factory ScheduledPayment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ScheduledPayment(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      amount: serializer.fromJson<double>(json['amount']),
+      frequency: serializer.fromJson<String>(json['frequency']),
+      nextPaymentDate: serializer.fromJson<DateTime>(json['nextPaymentDate']),
+      expenseId: serializer.fromJson<int?>(json['expenseId']),
+      bankId: serializer.fromJson<int?>(json['bankId']),
+      serverId: serializer.fromJson<String?>(json['serverId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'amount': serializer.toJson<double>(amount),
+      'frequency': serializer.toJson<String>(frequency),
+      'nextPaymentDate': serializer.toJson<DateTime>(nextPaymentDate),
+      'expenseId': serializer.toJson<int?>(expenseId),
+      'bankId': serializer.toJson<int?>(bankId),
+      'serverId': serializer.toJson<String?>(serverId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+    };
+  }
+
+  ScheduledPayment copyWith({
+    int? id,
+    String? name,
+    double? amount,
+    String? frequency,
+    DateTime? nextPaymentDate,
+    Value<int?> expenseId = const Value.absent(),
+    Value<int?> bankId = const Value.absent(),
+    Value<String?> serverId = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isDeleted,
+  }) => ScheduledPayment(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    amount: amount ?? this.amount,
+    frequency: frequency ?? this.frequency,
+    nextPaymentDate: nextPaymentDate ?? this.nextPaymentDate,
+    expenseId: expenseId.present ? expenseId.value : this.expenseId,
+    bankId: bankId.present ? bankId.value : this.bankId,
+    serverId: serverId.present ? serverId.value : this.serverId,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
+  ScheduledPayment copyWithCompanion(ScheduledPaymentsCompanion data) {
+    return ScheduledPayment(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      frequency: data.frequency.present ? data.frequency.value : this.frequency,
+      nextPaymentDate: data.nextPaymentDate.present
+          ? data.nextPaymentDate.value
+          : this.nextPaymentDate,
+      expenseId: data.expenseId.present ? data.expenseId.value : this.expenseId,
+      bankId: data.bankId.present ? data.bankId.value : this.bankId,
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduledPayment(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('amount: $amount, ')
+          ..write('frequency: $frequency, ')
+          ..write('nextPaymentDate: $nextPaymentDate, ')
+          ..write('expenseId: $expenseId, ')
+          ..write('bankId: $bankId, ')
+          ..write('serverId: $serverId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    name,
+    amount,
+    frequency,
+    nextPaymentDate,
+    expenseId,
+    bankId,
+    serverId,
+    createdAt,
+    updatedAt,
+    isDeleted,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ScheduledPayment &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.amount == this.amount &&
+          other.frequency == this.frequency &&
+          other.nextPaymentDate == this.nextPaymentDate &&
+          other.expenseId == this.expenseId &&
+          other.bankId == this.bankId &&
+          other.serverId == this.serverId &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.isDeleted == this.isDeleted);
+}
+
+class ScheduledPaymentsCompanion extends UpdateCompanion<ScheduledPayment> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<double> amount;
+  final Value<String> frequency;
+  final Value<DateTime> nextPaymentDate;
+  final Value<int?> expenseId;
+  final Value<int?> bankId;
+  final Value<String?> serverId;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> isDeleted;
+  const ScheduledPaymentsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.frequency = const Value.absent(),
+    this.nextPaymentDate = const Value.absent(),
+    this.expenseId = const Value.absent(),
+    this.bankId = const Value.absent(),
+    this.serverId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+  });
+  ScheduledPaymentsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required double amount,
+    required String frequency,
+    required DateTime nextPaymentDate,
+    this.expenseId = const Value.absent(),
+    this.bankId = const Value.absent(),
+    this.serverId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+  }) : name = Value(name),
+       amount = Value(amount),
+       frequency = Value(frequency),
+       nextPaymentDate = Value(nextPaymentDate);
+  static Insertable<ScheduledPayment> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<double>? amount,
+    Expression<String>? frequency,
+    Expression<DateTime>? nextPaymentDate,
+    Expression<int>? expenseId,
+    Expression<int>? bankId,
+    Expression<String>? serverId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? isDeleted,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (amount != null) 'amount': amount,
+      if (frequency != null) 'frequency': frequency,
+      if (nextPaymentDate != null) 'next_payment_date': nextPaymentDate,
+      if (expenseId != null) 'expense_id': expenseId,
+      if (bankId != null) 'bank_id': bankId,
+      if (serverId != null) 'server_id': serverId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+    });
+  }
+
+  ScheduledPaymentsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<double>? amount,
+    Value<String>? frequency,
+    Value<DateTime>? nextPaymentDate,
+    Value<int?>? expenseId,
+    Value<int?>? bankId,
+    Value<String?>? serverId,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? isDeleted,
+  }) {
+    return ScheduledPaymentsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      amount: amount ?? this.amount,
+      frequency: frequency ?? this.frequency,
+      nextPaymentDate: nextPaymentDate ?? this.nextPaymentDate,
+      expenseId: expenseId ?? this.expenseId,
+      bankId: bankId ?? this.bankId,
+      serverId: serverId ?? this.serverId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (frequency.present) {
+      map['frequency'] = Variable<String>(frequency.value);
+    }
+    if (nextPaymentDate.present) {
+      map['next_payment_date'] = Variable<DateTime>(nextPaymentDate.value);
+    }
+    if (expenseId.present) {
+      map['expense_id'] = Variable<int>(expenseId.value);
+    }
+    if (bankId.present) {
+      map['bank_id'] = Variable<int>(bankId.value);
+    }
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduledPaymentsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('amount: $amount, ')
+          ..write('frequency: $frequency, ')
+          ..write('nextPaymentDate: $nextPaymentDate, ')
+          ..write('expenseId: $expenseId, ')
+          ..write('bankId: $bankId, ')
+          ..write('serverId: $serverId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TransactionsTable extends Transactions
     with TableInfo<$TransactionsTable, Transaction> {
   @override
@@ -1424,6 +2085,19 @@ class $TransactionsTable extends Transactions
       'REFERENCES banks (id)',
     ),
   );
+  static const VerificationMeta _scheduledPaymentIdMeta =
+      const VerificationMeta('scheduledPaymentId');
+  @override
+  late final GeneratedColumn<int> scheduledPaymentId = GeneratedColumn<int>(
+    'scheduled_payment_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES scheduled_payments (id)',
+    ),
+  );
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
@@ -1495,6 +2169,7 @@ class $TransactionsTable extends Transactions
     statusColor,
     bankId,
     toBankId,
+    scheduledPaymentId,
     date,
     serverId,
     createdAt,
@@ -1579,6 +2254,15 @@ class $TransactionsTable extends Transactions
         toBankId.isAcceptableOrUnknown(data['to_bank_id']!, _toBankIdMeta),
       );
     }
+    if (data.containsKey('scheduled_payment_id')) {
+      context.handle(
+        _scheduledPaymentIdMeta,
+        scheduledPaymentId.isAcceptableOrUnknown(
+          data['scheduled_payment_id']!,
+          _scheduledPaymentIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('date')) {
       context.handle(
         _dateMeta,
@@ -1654,6 +2338,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}to_bank_id'],
       ),
+      scheduledPaymentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}scheduled_payment_id'],
+      ),
       date: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}date'],
@@ -1693,6 +2381,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final int statusColor;
   final int? bankId;
   final int? toBankId;
+  final int? scheduledPaymentId;
   final DateTime date;
   final String? serverId;
   final DateTime createdAt;
@@ -1708,6 +2397,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.statusColor,
     this.bankId,
     this.toBankId,
+    this.scheduledPaymentId,
     required this.date,
     this.serverId,
     required this.createdAt,
@@ -1729,6 +2419,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     }
     if (!nullToAbsent || toBankId != null) {
       map['to_bank_id'] = Variable<int>(toBankId);
+    }
+    if (!nullToAbsent || scheduledPaymentId != null) {
+      map['scheduled_payment_id'] = Variable<int>(scheduledPaymentId);
     }
     map['date'] = Variable<DateTime>(date);
     if (!nullToAbsent || serverId != null) {
@@ -1755,6 +2448,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       toBankId: toBankId == null && nullToAbsent
           ? const Value.absent()
           : Value(toBankId),
+      scheduledPaymentId: scheduledPaymentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduledPaymentId),
       date: Value(date),
       serverId: serverId == null && nullToAbsent
           ? const Value.absent()
@@ -1780,6 +2476,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       statusColor: serializer.fromJson<int>(json['statusColor']),
       bankId: serializer.fromJson<int?>(json['bankId']),
       toBankId: serializer.fromJson<int?>(json['toBankId']),
+      scheduledPaymentId: serializer.fromJson<int?>(json['scheduledPaymentId']),
       date: serializer.fromJson<DateTime>(json['date']),
       serverId: serializer.fromJson<String?>(json['serverId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1800,6 +2497,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'statusColor': serializer.toJson<int>(statusColor),
       'bankId': serializer.toJson<int?>(bankId),
       'toBankId': serializer.toJson<int?>(toBankId),
+      'scheduledPaymentId': serializer.toJson<int?>(scheduledPaymentId),
       'date': serializer.toJson<DateTime>(date),
       'serverId': serializer.toJson<String?>(serverId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1818,6 +2516,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     int? statusColor,
     Value<int?> bankId = const Value.absent(),
     Value<int?> toBankId = const Value.absent(),
+    Value<int?> scheduledPaymentId = const Value.absent(),
     DateTime? date,
     Value<String?> serverId = const Value.absent(),
     DateTime? createdAt,
@@ -1833,6 +2532,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     statusColor: statusColor ?? this.statusColor,
     bankId: bankId.present ? bankId.value : this.bankId,
     toBankId: toBankId.present ? toBankId.value : this.toBankId,
+    scheduledPaymentId: scheduledPaymentId.present
+        ? scheduledPaymentId.value
+        : this.scheduledPaymentId,
     date: date ?? this.date,
     serverId: serverId.present ? serverId.value : this.serverId,
     createdAt: createdAt ?? this.createdAt,
@@ -1852,6 +2554,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           : this.statusColor,
       bankId: data.bankId.present ? data.bankId.value : this.bankId,
       toBankId: data.toBankId.present ? data.toBankId.value : this.toBankId,
+      scheduledPaymentId: data.scheduledPaymentId.present
+          ? data.scheduledPaymentId.value
+          : this.scheduledPaymentId,
       date: data.date.present ? data.date.value : this.date,
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -1872,6 +2577,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('statusColor: $statusColor, ')
           ..write('bankId: $bankId, ')
           ..write('toBankId: $toBankId, ')
+          ..write('scheduledPaymentId: $scheduledPaymentId, ')
           ..write('date: $date, ')
           ..write('serverId: $serverId, ')
           ..write('createdAt: $createdAt, ')
@@ -1892,6 +2598,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     statusColor,
     bankId,
     toBankId,
+    scheduledPaymentId,
     date,
     serverId,
     createdAt,
@@ -1911,6 +2618,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.statusColor == this.statusColor &&
           other.bankId == this.bankId &&
           other.toBankId == this.toBankId &&
+          other.scheduledPaymentId == this.scheduledPaymentId &&
           other.date == this.date &&
           other.serverId == this.serverId &&
           other.createdAt == this.createdAt &&
@@ -1928,6 +2636,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> statusColor;
   final Value<int?> bankId;
   final Value<int?> toBankId;
+  final Value<int?> scheduledPaymentId;
   final Value<DateTime> date;
   final Value<String?> serverId;
   final Value<DateTime> createdAt;
@@ -1943,6 +2652,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.statusColor = const Value.absent(),
     this.bankId = const Value.absent(),
     this.toBankId = const Value.absent(),
+    this.scheduledPaymentId = const Value.absent(),
     this.date = const Value.absent(),
     this.serverId = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1959,6 +2669,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required int statusColor,
     this.bankId = const Value.absent(),
     this.toBankId = const Value.absent(),
+    this.scheduledPaymentId = const Value.absent(),
     this.date = const Value.absent(),
     this.serverId = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1980,6 +2691,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<int>? statusColor,
     Expression<int>? bankId,
     Expression<int>? toBankId,
+    Expression<int>? scheduledPaymentId,
     Expression<DateTime>? date,
     Expression<String>? serverId,
     Expression<DateTime>? createdAt,
@@ -1996,6 +2708,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (statusColor != null) 'status_color': statusColor,
       if (bankId != null) 'bank_id': bankId,
       if (toBankId != null) 'to_bank_id': toBankId,
+      if (scheduledPaymentId != null)
+        'scheduled_payment_id': scheduledPaymentId,
       if (date != null) 'date': date,
       if (serverId != null) 'server_id': serverId,
       if (createdAt != null) 'created_at': createdAt,
@@ -2014,6 +2728,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<int>? statusColor,
     Value<int?>? bankId,
     Value<int?>? toBankId,
+    Value<int?>? scheduledPaymentId,
     Value<DateTime>? date,
     Value<String?>? serverId,
     Value<DateTime>? createdAt,
@@ -2030,6 +2745,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       statusColor: statusColor ?? this.statusColor,
       bankId: bankId ?? this.bankId,
       toBankId: toBankId ?? this.toBankId,
+      scheduledPaymentId: scheduledPaymentId ?? this.scheduledPaymentId,
       date: date ?? this.date,
       serverId: serverId ?? this.serverId,
       createdAt: createdAt ?? this.createdAt,
@@ -2068,6 +2784,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (toBankId.present) {
       map['to_bank_id'] = Variable<int>(toBankId.value);
     }
+    if (scheduledPaymentId.present) {
+      map['scheduled_payment_id'] = Variable<int>(scheduledPaymentId.value);
+    }
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
@@ -2098,6 +2817,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('statusColor: $statusColor, ')
           ..write('bankId: $bankId, ')
           ..write('toBankId: $toBankId, ')
+          ..write('scheduledPaymentId: $scheduledPaymentId, ')
           ..write('date: $date, ')
           ..write('serverId: $serverId, ')
           ..write('createdAt: $createdAt, ')
@@ -2750,615 +3470,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
           ..write('month: $month, ')
           ..write('year: $year, ')
           ..write('iconColor: $iconColor, ')
-          ..write('serverId: $serverId, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('isDeleted: $isDeleted')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $ScheduledPaymentsTable extends ScheduledPayments
-    with TableInfo<$ScheduledPaymentsTable, ScheduledPayment> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $ScheduledPaymentsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 100,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
-  @override
-  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
-    'amount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _frequencyMeta = const VerificationMeta(
-    'frequency',
-  );
-  @override
-  late final GeneratedColumn<String> frequency = GeneratedColumn<String>(
-    'frequency',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 20,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _nextPaymentDateMeta = const VerificationMeta(
-    'nextPaymentDate',
-  );
-  @override
-  late final GeneratedColumn<DateTime> nextPaymentDate =
-      GeneratedColumn<DateTime>(
-        'next_payment_date',
-        aliasedName,
-        false,
-        type: DriftSqlType.dateTime,
-        requiredDuringInsert: true,
-      );
-  static const VerificationMeta _bankIdMeta = const VerificationMeta('bankId');
-  @override
-  late final GeneratedColumn<int> bankId = GeneratedColumn<int>(
-    'bank_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES banks (id)',
-    ),
-  );
-  static const VerificationMeta _serverIdMeta = const VerificationMeta(
-    'serverId',
-  );
-  @override
-  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
-    'server_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
-    'isDeleted',
-  );
-  @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-    'is_deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    name,
-    amount,
-    frequency,
-    nextPaymentDate,
-    bankId,
-    serverId,
-    createdAt,
-    updatedAt,
-    isDeleted,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'scheduled_payments';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<ScheduledPayment> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('amount')) {
-      context.handle(
-        _amountMeta,
-        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_amountMeta);
-    }
-    if (data.containsKey('frequency')) {
-      context.handle(
-        _frequencyMeta,
-        frequency.isAcceptableOrUnknown(data['frequency']!, _frequencyMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_frequencyMeta);
-    }
-    if (data.containsKey('next_payment_date')) {
-      context.handle(
-        _nextPaymentDateMeta,
-        nextPaymentDate.isAcceptableOrUnknown(
-          data['next_payment_date']!,
-          _nextPaymentDateMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_nextPaymentDateMeta);
-    }
-    if (data.containsKey('bank_id')) {
-      context.handle(
-        _bankIdMeta,
-        bankId.isAcceptableOrUnknown(data['bank_id']!, _bankIdMeta),
-      );
-    }
-    if (data.containsKey('server_id')) {
-      context.handle(
-        _serverIdMeta,
-        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    }
-    if (data.containsKey('is_deleted')) {
-      context.handle(
-        _isDeletedMeta,
-        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  ScheduledPayment map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ScheduledPayment(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      amount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}amount'],
-      )!,
-      frequency: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}frequency'],
-      )!,
-      nextPaymentDate: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}next_payment_date'],
-      )!,
-      bankId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}bank_id'],
-      ),
-      serverId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}server_id'],
-      ),
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      isDeleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_deleted'],
-      )!,
-    );
-  }
-
-  @override
-  $ScheduledPaymentsTable createAlias(String alias) {
-    return $ScheduledPaymentsTable(attachedDatabase, alias);
-  }
-}
-
-class ScheduledPayment extends DataClass
-    implements Insertable<ScheduledPayment> {
-  final int id;
-  final String name;
-  final double amount;
-  final String frequency;
-  final DateTime nextPaymentDate;
-  final int? bankId;
-  final String? serverId;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool isDeleted;
-  const ScheduledPayment({
-    required this.id,
-    required this.name,
-    required this.amount,
-    required this.frequency,
-    required this.nextPaymentDate,
-    this.bankId,
-    this.serverId,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.isDeleted,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['name'] = Variable<String>(name);
-    map['amount'] = Variable<double>(amount);
-    map['frequency'] = Variable<String>(frequency);
-    map['next_payment_date'] = Variable<DateTime>(nextPaymentDate);
-    if (!nullToAbsent || bankId != null) {
-      map['bank_id'] = Variable<int>(bankId);
-    }
-    if (!nullToAbsent || serverId != null) {
-      map['server_id'] = Variable<String>(serverId);
-    }
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['is_deleted'] = Variable<bool>(isDeleted);
-    return map;
-  }
-
-  ScheduledPaymentsCompanion toCompanion(bool nullToAbsent) {
-    return ScheduledPaymentsCompanion(
-      id: Value(id),
-      name: Value(name),
-      amount: Value(amount),
-      frequency: Value(frequency),
-      nextPaymentDate: Value(nextPaymentDate),
-      bankId: bankId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(bankId),
-      serverId: serverId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(serverId),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-      isDeleted: Value(isDeleted),
-    );
-  }
-
-  factory ScheduledPayment.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ScheduledPayment(
-      id: serializer.fromJson<int>(json['id']),
-      name: serializer.fromJson<String>(json['name']),
-      amount: serializer.fromJson<double>(json['amount']),
-      frequency: serializer.fromJson<String>(json['frequency']),
-      nextPaymentDate: serializer.fromJson<DateTime>(json['nextPaymentDate']),
-      bankId: serializer.fromJson<int?>(json['bankId']),
-      serverId: serializer.fromJson<String?>(json['serverId']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'name': serializer.toJson<String>(name),
-      'amount': serializer.toJson<double>(amount),
-      'frequency': serializer.toJson<String>(frequency),
-      'nextPaymentDate': serializer.toJson<DateTime>(nextPaymentDate),
-      'bankId': serializer.toJson<int?>(bankId),
-      'serverId': serializer.toJson<String?>(serverId),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
-    };
-  }
-
-  ScheduledPayment copyWith({
-    int? id,
-    String? name,
-    double? amount,
-    String? frequency,
-    DateTime? nextPaymentDate,
-    Value<int?> bankId = const Value.absent(),
-    Value<String?> serverId = const Value.absent(),
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    bool? isDeleted,
-  }) => ScheduledPayment(
-    id: id ?? this.id,
-    name: name ?? this.name,
-    amount: amount ?? this.amount,
-    frequency: frequency ?? this.frequency,
-    nextPaymentDate: nextPaymentDate ?? this.nextPaymentDate,
-    bankId: bankId.present ? bankId.value : this.bankId,
-    serverId: serverId.present ? serverId.value : this.serverId,
-    createdAt: createdAt ?? this.createdAt,
-    updatedAt: updatedAt ?? this.updatedAt,
-    isDeleted: isDeleted ?? this.isDeleted,
-  );
-  ScheduledPayment copyWithCompanion(ScheduledPaymentsCompanion data) {
-    return ScheduledPayment(
-      id: data.id.present ? data.id.value : this.id,
-      name: data.name.present ? data.name.value : this.name,
-      amount: data.amount.present ? data.amount.value : this.amount,
-      frequency: data.frequency.present ? data.frequency.value : this.frequency,
-      nextPaymentDate: data.nextPaymentDate.present
-          ? data.nextPaymentDate.value
-          : this.nextPaymentDate,
-      bankId: data.bankId.present ? data.bankId.value : this.bankId,
-      serverId: data.serverId.present ? data.serverId.value : this.serverId,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ScheduledPayment(')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('amount: $amount, ')
-          ..write('frequency: $frequency, ')
-          ..write('nextPaymentDate: $nextPaymentDate, ')
-          ..write('bankId: $bankId, ')
-          ..write('serverId: $serverId, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('isDeleted: $isDeleted')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    name,
-    amount,
-    frequency,
-    nextPaymentDate,
-    bankId,
-    serverId,
-    createdAt,
-    updatedAt,
-    isDeleted,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ScheduledPayment &&
-          other.id == this.id &&
-          other.name == this.name &&
-          other.amount == this.amount &&
-          other.frequency == this.frequency &&
-          other.nextPaymentDate == this.nextPaymentDate &&
-          other.bankId == this.bankId &&
-          other.serverId == this.serverId &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
-          other.isDeleted == this.isDeleted);
-}
-
-class ScheduledPaymentsCompanion extends UpdateCompanion<ScheduledPayment> {
-  final Value<int> id;
-  final Value<String> name;
-  final Value<double> amount;
-  final Value<String> frequency;
-  final Value<DateTime> nextPaymentDate;
-  final Value<int?> bankId;
-  final Value<String?> serverId;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
-  final Value<bool> isDeleted;
-  const ScheduledPaymentsCompanion({
-    this.id = const Value.absent(),
-    this.name = const Value.absent(),
-    this.amount = const Value.absent(),
-    this.frequency = const Value.absent(),
-    this.nextPaymentDate = const Value.absent(),
-    this.bankId = const Value.absent(),
-    this.serverId = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.isDeleted = const Value.absent(),
-  });
-  ScheduledPaymentsCompanion.insert({
-    this.id = const Value.absent(),
-    required String name,
-    required double amount,
-    required String frequency,
-    required DateTime nextPaymentDate,
-    this.bankId = const Value.absent(),
-    this.serverId = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.isDeleted = const Value.absent(),
-  }) : name = Value(name),
-       amount = Value(amount),
-       frequency = Value(frequency),
-       nextPaymentDate = Value(nextPaymentDate);
-  static Insertable<ScheduledPayment> custom({
-    Expression<int>? id,
-    Expression<String>? name,
-    Expression<double>? amount,
-    Expression<String>? frequency,
-    Expression<DateTime>? nextPaymentDate,
-    Expression<int>? bankId,
-    Expression<String>? serverId,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-    Expression<bool>? isDeleted,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (name != null) 'name': name,
-      if (amount != null) 'amount': amount,
-      if (frequency != null) 'frequency': frequency,
-      if (nextPaymentDate != null) 'next_payment_date': nextPaymentDate,
-      if (bankId != null) 'bank_id': bankId,
-      if (serverId != null) 'server_id': serverId,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (isDeleted != null) 'is_deleted': isDeleted,
-    });
-  }
-
-  ScheduledPaymentsCompanion copyWith({
-    Value<int>? id,
-    Value<String>? name,
-    Value<double>? amount,
-    Value<String>? frequency,
-    Value<DateTime>? nextPaymentDate,
-    Value<int?>? bankId,
-    Value<String?>? serverId,
-    Value<DateTime>? createdAt,
-    Value<DateTime>? updatedAt,
-    Value<bool>? isDeleted,
-  }) {
-    return ScheduledPaymentsCompanion(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      amount: amount ?? this.amount,
-      frequency: frequency ?? this.frequency,
-      nextPaymentDate: nextPaymentDate ?? this.nextPaymentDate,
-      bankId: bankId ?? this.bankId,
-      serverId: serverId ?? this.serverId,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      isDeleted: isDeleted ?? this.isDeleted,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (amount.present) {
-      map['amount'] = Variable<double>(amount.value);
-    }
-    if (frequency.present) {
-      map['frequency'] = Variable<String>(frequency.value);
-    }
-    if (nextPaymentDate.present) {
-      map['next_payment_date'] = Variable<DateTime>(nextPaymentDate.value);
-    }
-    if (bankId.present) {
-      map['bank_id'] = Variable<int>(bankId.value);
-    }
-    if (serverId.present) {
-      map['server_id'] = Variable<String>(serverId.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ScheduledPaymentsCompanion(')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('amount: $amount, ')
-          ..write('frequency: $frequency, ')
-          ..write('nextPaymentDate: $nextPaymentDate, ')
-          ..write('bankId: $bankId, ')
           ..write('serverId: $serverId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -5446,10 +5557,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $BanksTable banks = $BanksTable(this);
   late final $ExpensesTable expenses = $ExpensesTable(this);
-  late final $TransactionsTable transactions = $TransactionsTable(this);
-  late final $BudgetsTable budgets = $BudgetsTable(this);
   late final $ScheduledPaymentsTable scheduledPayments =
       $ScheduledPaymentsTable(this);
+  late final $TransactionsTable transactions = $TransactionsTable(this);
+  late final $BudgetsTable budgets = $BudgetsTable(this);
   late final $NotificationsTable notifications = $NotificationsTable(this);
   late final $ChatSessionsTable chatSessions = $ChatSessionsTable(this);
   late final $ChatMessagesTable chatMessages = $ChatMessagesTable(this);
@@ -5462,9 +5573,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     banks,
     expenses,
+    scheduledPayments,
     transactions,
     budgets,
-    scheduledPayments,
     notifications,
     chatSessions,
     chatMessages,
@@ -6015,6 +6126,30 @@ final class $$ExpensesTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static MultiTypedResultKey<$ScheduledPaymentsTable, List<ScheduledPayment>>
+  _scheduledPaymentsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.scheduledPayments,
+        aliasName: $_aliasNameGenerator(
+          db.expenses.id,
+          db.scheduledPayments.expenseId,
+        ),
+      );
+
+  $$ScheduledPaymentsTableProcessedTableManager get scheduledPaymentsRefs {
+    final manager = $$ScheduledPaymentsTableTableManager(
+      $_db,
+      $_db.scheduledPayments,
+    ).filter((f) => f.expenseId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _scheduledPaymentsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$ExpensesTableFilterComposer
@@ -6102,6 +6237,31 @@ class $$ExpensesTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> scheduledPaymentsRefs(
+    Expression<bool> Function($$ScheduledPaymentsTableFilterComposer f) f,
+  ) {
+    final $$ScheduledPaymentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.scheduledPayments,
+      getReferencedColumn: (t) => t.expenseId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ScheduledPaymentsTableFilterComposer(
+            $db: $db,
+            $table: $db.scheduledPayments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 }
 
@@ -6259,6 +6419,32 @@ class $$ExpensesTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> scheduledPaymentsRefs<T extends Object>(
+    Expression<T> Function($$ScheduledPaymentsTableAnnotationComposer a) f,
+  ) {
+    final $$ScheduledPaymentsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.scheduledPayments,
+          getReferencedColumn: (t) => t.expenseId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ScheduledPaymentsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.scheduledPayments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$ExpensesTableTableManager
@@ -6274,7 +6460,7 @@ class $$ExpensesTableTableManager
           $$ExpensesTableUpdateCompanionBuilder,
           (Expense, $$ExpensesTableReferences),
           Expense,
-          PrefetchHooks Function({bool bankId})
+          PrefetchHooks Function({bool bankId, bool scheduledPaymentsRefs})
         > {
   $$ExpensesTableTableManager(_$AppDatabase db, $ExpensesTable table)
     : super(
@@ -6351,47 +6537,72 @@ class $$ExpensesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({bankId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (bankId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.bankId,
-                                referencedTable: $$ExpensesTableReferences
-                                    ._bankIdTable(db),
-                                referencedColumn: $$ExpensesTableReferences
-                                    ._bankIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
+          prefetchHooksCallback:
+              ({bankId = false, scheduledPaymentsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (scheduledPaymentsRefs) db.scheduledPayments,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (bankId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.bankId,
+                                    referencedTable: $$ExpensesTableReferences
+                                        ._bankIdTable(db),
+                                    referencedColumn: $$ExpensesTableReferences
+                                        ._bankIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (scheduledPaymentsRefs)
+                        await $_getPrefetchedData<
+                          Expense,
+                          $ExpensesTable,
+                          ScheduledPayment
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ExpensesTableReferences
+                              ._scheduledPaymentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ExpensesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).scheduledPaymentsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.expenseId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -6408,7 +6619,645 @@ typedef $$ExpensesTableProcessedTableManager =
       $$ExpensesTableUpdateCompanionBuilder,
       (Expense, $$ExpensesTableReferences),
       Expense,
-      PrefetchHooks Function({bool bankId})
+      PrefetchHooks Function({bool bankId, bool scheduledPaymentsRefs})
+    >;
+typedef $$ScheduledPaymentsTableCreateCompanionBuilder =
+    ScheduledPaymentsCompanion Function({
+      Value<int> id,
+      required String name,
+      required double amount,
+      required String frequency,
+      required DateTime nextPaymentDate,
+      Value<int?> expenseId,
+      Value<int?> bankId,
+      Value<String?> serverId,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<bool> isDeleted,
+    });
+typedef $$ScheduledPaymentsTableUpdateCompanionBuilder =
+    ScheduledPaymentsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<double> amount,
+      Value<String> frequency,
+      Value<DateTime> nextPaymentDate,
+      Value<int?> expenseId,
+      Value<int?> bankId,
+      Value<String?> serverId,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<bool> isDeleted,
+    });
+
+final class $$ScheduledPaymentsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ScheduledPaymentsTable,
+          ScheduledPayment
+        > {
+  $$ScheduledPaymentsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ExpensesTable _expenseIdTable(_$AppDatabase db) =>
+      db.expenses.createAlias(
+        $_aliasNameGenerator(db.scheduledPayments.expenseId, db.expenses.id),
+      );
+
+  $$ExpensesTableProcessedTableManager? get expenseId {
+    final $_column = $_itemColumn<int>('expense_id');
+    if ($_column == null) return null;
+    final manager = $$ExpensesTableTableManager(
+      $_db,
+      $_db.expenses,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_expenseIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $BanksTable _bankIdTable(_$AppDatabase db) => db.banks.createAlias(
+    $_aliasNameGenerator(db.scheduledPayments.bankId, db.banks.id),
+  );
+
+  $$BanksTableProcessedTableManager? get bankId {
+    final $_column = $_itemColumn<int>('bank_id');
+    if ($_column == null) return null;
+    final manager = $$BanksTableTableManager(
+      $_db,
+      $_db.banks,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_bankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$TransactionsTable, List<Transaction>>
+  _transactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.transactions,
+    aliasName: $_aliasNameGenerator(
+      db.scheduledPayments.id,
+      db.transactions.scheduledPaymentId,
+    ),
+  );
+
+  $$TransactionsTableProcessedTableManager get transactionsRefs {
+    final manager = $$TransactionsTableTableManager($_db, $_db.transactions)
+        .filter(
+          (f) => f.scheduledPaymentId.id.sqlEquals($_itemColumn<int>('id')!),
+        );
+
+    final cache = $_typedResult.readTableOrNull(_transactionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ScheduledPaymentsTableFilterComposer
+    extends Composer<_$AppDatabase, $ScheduledPaymentsTable> {
+  $$ScheduledPaymentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get frequency => $composableBuilder(
+    column: $table.frequency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextPaymentDate => $composableBuilder(
+    column: $table.nextPaymentDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ExpensesTableFilterComposer get expenseId {
+    final $$ExpensesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.expenseId,
+      referencedTable: $db.expenses,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExpensesTableFilterComposer(
+            $db: $db,
+            $table: $db.expenses,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BanksTableFilterComposer get bankId {
+    final $$BanksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bankId,
+      referencedTable: $db.banks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanksTableFilterComposer(
+            $db: $db,
+            $table: $db.banks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> transactionsRefs(
+    Expression<bool> Function($$TransactionsTableFilterComposer f) f,
+  ) {
+    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.scheduledPaymentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ScheduledPaymentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ScheduledPaymentsTable> {
+  $$ScheduledPaymentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get frequency => $composableBuilder(
+    column: $table.frequency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextPaymentDate => $composableBuilder(
+    column: $table.nextPaymentDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ExpensesTableOrderingComposer get expenseId {
+    final $$ExpensesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.expenseId,
+      referencedTable: $db.expenses,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExpensesTableOrderingComposer(
+            $db: $db,
+            $table: $db.expenses,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BanksTableOrderingComposer get bankId {
+    final $$BanksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bankId,
+      referencedTable: $db.banks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanksTableOrderingComposer(
+            $db: $db,
+            $table: $db.banks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ScheduledPaymentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ScheduledPaymentsTable> {
+  $$ScheduledPaymentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get frequency =>
+      $composableBuilder(column: $table.frequency, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextPaymentDate => $composableBuilder(
+    column: $table.nextPaymentDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get serverId =>
+      $composableBuilder(column: $table.serverId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+
+  $$ExpensesTableAnnotationComposer get expenseId {
+    final $$ExpensesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.expenseId,
+      referencedTable: $db.expenses,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ExpensesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.expenses,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$BanksTableAnnotationComposer get bankId {
+    final $$BanksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.bankId,
+      referencedTable: $db.banks,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BanksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.banks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> transactionsRefs<T extends Object>(
+    Expression<T> Function($$TransactionsTableAnnotationComposer a) f,
+  ) {
+    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.scheduledPaymentId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ScheduledPaymentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ScheduledPaymentsTable,
+          ScheduledPayment,
+          $$ScheduledPaymentsTableFilterComposer,
+          $$ScheduledPaymentsTableOrderingComposer,
+          $$ScheduledPaymentsTableAnnotationComposer,
+          $$ScheduledPaymentsTableCreateCompanionBuilder,
+          $$ScheduledPaymentsTableUpdateCompanionBuilder,
+          (ScheduledPayment, $$ScheduledPaymentsTableReferences),
+          ScheduledPayment,
+          PrefetchHooks Function({
+            bool expenseId,
+            bool bankId,
+            bool transactionsRefs,
+          })
+        > {
+  $$ScheduledPaymentsTableTableManager(
+    _$AppDatabase db,
+    $ScheduledPaymentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ScheduledPaymentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ScheduledPaymentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ScheduledPaymentsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<String> frequency = const Value.absent(),
+                Value<DateTime> nextPaymentDate = const Value.absent(),
+                Value<int?> expenseId = const Value.absent(),
+                Value<int?> bankId = const Value.absent(),
+                Value<String?> serverId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+              }) => ScheduledPaymentsCompanion(
+                id: id,
+                name: name,
+                amount: amount,
+                frequency: frequency,
+                nextPaymentDate: nextPaymentDate,
+                expenseId: expenseId,
+                bankId: bankId,
+                serverId: serverId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isDeleted: isDeleted,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required double amount,
+                required String frequency,
+                required DateTime nextPaymentDate,
+                Value<int?> expenseId = const Value.absent(),
+                Value<int?> bankId = const Value.absent(),
+                Value<String?> serverId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+              }) => ScheduledPaymentsCompanion.insert(
+                id: id,
+                name: name,
+                amount: amount,
+                frequency: frequency,
+                nextPaymentDate: nextPaymentDate,
+                expenseId: expenseId,
+                bankId: bankId,
+                serverId: serverId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isDeleted: isDeleted,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ScheduledPaymentsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback:
+              ({expenseId = false, bankId = false, transactionsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (transactionsRefs) db.transactions,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (expenseId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.expenseId,
+                                    referencedTable:
+                                        $$ScheduledPaymentsTableReferences
+                                            ._expenseIdTable(db),
+                                    referencedColumn:
+                                        $$ScheduledPaymentsTableReferences
+                                            ._expenseIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (bankId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.bankId,
+                                    referencedTable:
+                                        $$ScheduledPaymentsTableReferences
+                                            ._bankIdTable(db),
+                                    referencedColumn:
+                                        $$ScheduledPaymentsTableReferences
+                                            ._bankIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (transactionsRefs)
+                        await $_getPrefetchedData<
+                          ScheduledPayment,
+                          $ScheduledPaymentsTable,
+                          Transaction
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ScheduledPaymentsTableReferences
+                              ._transactionsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ScheduledPaymentsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).transactionsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.scheduledPaymentId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$ScheduledPaymentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ScheduledPaymentsTable,
+      ScheduledPayment,
+      $$ScheduledPaymentsTableFilterComposer,
+      $$ScheduledPaymentsTableOrderingComposer,
+      $$ScheduledPaymentsTableAnnotationComposer,
+      $$ScheduledPaymentsTableCreateCompanionBuilder,
+      $$ScheduledPaymentsTableUpdateCompanionBuilder,
+      (ScheduledPayment, $$ScheduledPaymentsTableReferences),
+      ScheduledPayment,
+      PrefetchHooks Function({
+        bool expenseId,
+        bool bankId,
+        bool transactionsRefs,
+      })
     >;
 typedef $$TransactionsTableCreateCompanionBuilder =
     TransactionsCompanion Function({
@@ -6421,6 +7270,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int statusColor,
       Value<int?> bankId,
       Value<int?> toBankId,
+      Value<int?> scheduledPaymentId,
       Value<DateTime> date,
       Value<String?> serverId,
       Value<DateTime> createdAt,
@@ -6438,6 +7288,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> statusColor,
       Value<int?> bankId,
       Value<int?> toBankId,
+      Value<int?> scheduledPaymentId,
       Value<DateTime> date,
       Value<String?> serverId,
       Value<DateTime> createdAt,
@@ -6479,6 +7330,28 @@ final class $$TransactionsTableReferences
       $_db.banks,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_toBankIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $ScheduledPaymentsTable _scheduledPaymentIdTable(_$AppDatabase db) =>
+      db.scheduledPayments.createAlias(
+        $_aliasNameGenerator(
+          db.transactions.scheduledPaymentId,
+          db.scheduledPayments.id,
+        ),
+      );
+
+  $$ScheduledPaymentsTableProcessedTableManager? get scheduledPaymentId {
+    final $_column = $_itemColumn<int>('scheduled_payment_id');
+    if ($_column == null) return null;
+    final manager = $$ScheduledPaymentsTableTableManager(
+      $_db,
+      $_db.scheduledPayments,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_scheduledPaymentIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -6592,6 +7465,29 @@ class $$TransactionsTableFilterComposer
           }) => $$BanksTableFilterComposer(
             $db: $db,
             $table: $db.banks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ScheduledPaymentsTableFilterComposer get scheduledPaymentId {
+    final $$ScheduledPaymentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.scheduledPaymentId,
+      referencedTable: $db.scheduledPayments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ScheduledPaymentsTableFilterComposer(
+            $db: $db,
+            $table: $db.scheduledPayments,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -6716,6 +7612,29 @@ class $$TransactionsTableOrderingComposer
     );
     return composer;
   }
+
+  $$ScheduledPaymentsTableOrderingComposer get scheduledPaymentId {
+    final $$ScheduledPaymentsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.scheduledPaymentId,
+      referencedTable: $db.scheduledPayments,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ScheduledPaymentsTableOrderingComposer(
+            $db: $db,
+            $table: $db.scheduledPayments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -6810,6 +7729,30 @@ class $$TransactionsTableAnnotationComposer
     );
     return composer;
   }
+
+  $$ScheduledPaymentsTableAnnotationComposer get scheduledPaymentId {
+    final $$ScheduledPaymentsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.scheduledPaymentId,
+          referencedTable: $db.scheduledPayments,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ScheduledPaymentsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.scheduledPayments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
 }
 
 class $$TransactionsTableTableManager
@@ -6825,7 +7768,11 @@ class $$TransactionsTableTableManager
           $$TransactionsTableUpdateCompanionBuilder,
           (Transaction, $$TransactionsTableReferences),
           Transaction,
-          PrefetchHooks Function({bool bankId, bool toBankId})
+          PrefetchHooks Function({
+            bool bankId,
+            bool toBankId,
+            bool scheduledPaymentId,
+          })
         > {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
     : super(
@@ -6849,6 +7796,7 @@ class $$TransactionsTableTableManager
                 Value<int> statusColor = const Value.absent(),
                 Value<int?> bankId = const Value.absent(),
                 Value<int?> toBankId = const Value.absent(),
+                Value<int?> scheduledPaymentId = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<String?> serverId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -6864,6 +7812,7 @@ class $$TransactionsTableTableManager
                 statusColor: statusColor,
                 bankId: bankId,
                 toBankId: toBankId,
+                scheduledPaymentId: scheduledPaymentId,
                 date: date,
                 serverId: serverId,
                 createdAt: createdAt,
@@ -6881,6 +7830,7 @@ class $$TransactionsTableTableManager
                 required int statusColor,
                 Value<int?> bankId = const Value.absent(),
                 Value<int?> toBankId = const Value.absent(),
+                Value<int?> scheduledPaymentId = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<String?> serverId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -6896,6 +7846,7 @@ class $$TransactionsTableTableManager
                 statusColor: statusColor,
                 bankId: bankId,
                 toBankId: toBankId,
+                scheduledPaymentId: scheduledPaymentId,
                 date: date,
                 serverId: serverId,
                 createdAt: createdAt,
@@ -6910,60 +7861,80 @@ class $$TransactionsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({bankId = false, toBankId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (bankId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.bankId,
-                                referencedTable: $$TransactionsTableReferences
-                                    ._bankIdTable(db),
-                                referencedColumn: $$TransactionsTableReferences
-                                    ._bankIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
-                    if (toBankId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.toBankId,
-                                referencedTable: $$TransactionsTableReferences
-                                    ._toBankIdTable(db),
-                                referencedColumn: $$TransactionsTableReferences
-                                    ._toBankIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
+          prefetchHooksCallback:
+              ({bankId = false, toBankId = false, scheduledPaymentId = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (bankId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.bankId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._bankIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._bankIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (toBankId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.toBankId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._toBankIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._toBankIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (scheduledPaymentId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.scheduledPaymentId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._scheduledPaymentIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._scheduledPaymentIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -6980,7 +7951,11 @@ typedef $$TransactionsTableProcessedTableManager =
       $$TransactionsTableUpdateCompanionBuilder,
       (Transaction, $$TransactionsTableReferences),
       Transaction,
-      PrefetchHooks Function({bool bankId, bool toBankId})
+      PrefetchHooks Function({
+        bool bankId,
+        bool toBankId,
+        bool scheduledPaymentId,
+      })
     >;
 typedef $$BudgetsTableCreateCompanionBuilder =
     BudgetsCompanion Function({
@@ -7287,431 +8262,6 @@ typedef $$BudgetsTableProcessedTableManager =
       (Budget, BaseReferences<_$AppDatabase, $BudgetsTable, Budget>),
       Budget,
       PrefetchHooks Function()
-    >;
-typedef $$ScheduledPaymentsTableCreateCompanionBuilder =
-    ScheduledPaymentsCompanion Function({
-      Value<int> id,
-      required String name,
-      required double amount,
-      required String frequency,
-      required DateTime nextPaymentDate,
-      Value<int?> bankId,
-      Value<String?> serverId,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-      Value<bool> isDeleted,
-    });
-typedef $$ScheduledPaymentsTableUpdateCompanionBuilder =
-    ScheduledPaymentsCompanion Function({
-      Value<int> id,
-      Value<String> name,
-      Value<double> amount,
-      Value<String> frequency,
-      Value<DateTime> nextPaymentDate,
-      Value<int?> bankId,
-      Value<String?> serverId,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-      Value<bool> isDeleted,
-    });
-
-final class $$ScheduledPaymentsTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $ScheduledPaymentsTable,
-          ScheduledPayment
-        > {
-  $$ScheduledPaymentsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $BanksTable _bankIdTable(_$AppDatabase db) => db.banks.createAlias(
-    $_aliasNameGenerator(db.scheduledPayments.bankId, db.banks.id),
-  );
-
-  $$BanksTableProcessedTableManager? get bankId {
-    final $_column = $_itemColumn<int>('bank_id');
-    if ($_column == null) return null;
-    final manager = $$BanksTableTableManager(
-      $_db,
-      $_db.banks,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_bankIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$ScheduledPaymentsTableFilterComposer
-    extends Composer<_$AppDatabase, $ScheduledPaymentsTable> {
-  $$ScheduledPaymentsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get frequency => $composableBuilder(
-    column: $table.frequency,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get nextPaymentDate => $composableBuilder(
-    column: $table.nextPaymentDate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get serverId => $composableBuilder(
-    column: $table.serverId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$BanksTableFilterComposer get bankId {
-    final $$BanksTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.bankId,
-      referencedTable: $db.banks,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BanksTableFilterComposer(
-            $db: $db,
-            $table: $db.banks,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ScheduledPaymentsTableOrderingComposer
-    extends Composer<_$AppDatabase, $ScheduledPaymentsTable> {
-  $$ScheduledPaymentsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get frequency => $composableBuilder(
-    column: $table.frequency,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get nextPaymentDate => $composableBuilder(
-    column: $table.nextPaymentDate,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get serverId => $composableBuilder(
-    column: $table.serverId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$BanksTableOrderingComposer get bankId {
-    final $$BanksTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.bankId,
-      referencedTable: $db.banks,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BanksTableOrderingComposer(
-            $db: $db,
-            $table: $db.banks,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ScheduledPaymentsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ScheduledPaymentsTable> {
-  $$ScheduledPaymentsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<double> get amount =>
-      $composableBuilder(column: $table.amount, builder: (column) => column);
-
-  GeneratedColumn<String> get frequency =>
-      $composableBuilder(column: $table.frequency, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get nextPaymentDate => $composableBuilder(
-    column: $table.nextPaymentDate,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get serverId =>
-      $composableBuilder(column: $table.serverId, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
-
-  $$BanksTableAnnotationComposer get bankId {
-    final $$BanksTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.bankId,
-      referencedTable: $db.banks,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BanksTableAnnotationComposer(
-            $db: $db,
-            $table: $db.banks,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$ScheduledPaymentsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $ScheduledPaymentsTable,
-          ScheduledPayment,
-          $$ScheduledPaymentsTableFilterComposer,
-          $$ScheduledPaymentsTableOrderingComposer,
-          $$ScheduledPaymentsTableAnnotationComposer,
-          $$ScheduledPaymentsTableCreateCompanionBuilder,
-          $$ScheduledPaymentsTableUpdateCompanionBuilder,
-          (ScheduledPayment, $$ScheduledPaymentsTableReferences),
-          ScheduledPayment,
-          PrefetchHooks Function({bool bankId})
-        > {
-  $$ScheduledPaymentsTableTableManager(
-    _$AppDatabase db,
-    $ScheduledPaymentsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$ScheduledPaymentsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$ScheduledPaymentsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$ScheduledPaymentsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<double> amount = const Value.absent(),
-                Value<String> frequency = const Value.absent(),
-                Value<DateTime> nextPaymentDate = const Value.absent(),
-                Value<int?> bankId = const Value.absent(),
-                Value<String?> serverId = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
-              }) => ScheduledPaymentsCompanion(
-                id: id,
-                name: name,
-                amount: amount,
-                frequency: frequency,
-                nextPaymentDate: nextPaymentDate,
-                bankId: bankId,
-                serverId: serverId,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                isDeleted: isDeleted,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String name,
-                required double amount,
-                required String frequency,
-                required DateTime nextPaymentDate,
-                Value<int?> bankId = const Value.absent(),
-                Value<String?> serverId = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
-              }) => ScheduledPaymentsCompanion.insert(
-                id: id,
-                name: name,
-                amount: amount,
-                frequency: frequency,
-                nextPaymentDate: nextPaymentDate,
-                bankId: bankId,
-                serverId: serverId,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                isDeleted: isDeleted,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$ScheduledPaymentsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({bankId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (bankId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.bankId,
-                                referencedTable:
-                                    $$ScheduledPaymentsTableReferences
-                                        ._bankIdTable(db),
-                                referencedColumn:
-                                    $$ScheduledPaymentsTableReferences
-                                        ._bankIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$ScheduledPaymentsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $ScheduledPaymentsTable,
-      ScheduledPayment,
-      $$ScheduledPaymentsTableFilterComposer,
-      $$ScheduledPaymentsTableOrderingComposer,
-      $$ScheduledPaymentsTableAnnotationComposer,
-      $$ScheduledPaymentsTableCreateCompanionBuilder,
-      $$ScheduledPaymentsTableUpdateCompanionBuilder,
-      (ScheduledPayment, $$ScheduledPaymentsTableReferences),
-      ScheduledPayment,
-      PrefetchHooks Function({bool bankId})
     >;
 typedef $$NotificationsTableCreateCompanionBuilder =
     NotificationsCompanion Function({
@@ -8988,12 +9538,12 @@ class $AppDatabaseManager {
       $$BanksTableTableManager(_db, _db.banks);
   $$ExpensesTableTableManager get expenses =>
       $$ExpensesTableTableManager(_db, _db.expenses);
+  $$ScheduledPaymentsTableTableManager get scheduledPayments =>
+      $$ScheduledPaymentsTableTableManager(_db, _db.scheduledPayments);
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db, _db.transactions);
   $$BudgetsTableTableManager get budgets =>
       $$BudgetsTableTableManager(_db, _db.budgets);
-  $$ScheduledPaymentsTableTableManager get scheduledPayments =>
-      $$ScheduledPaymentsTableTableManager(_db, _db.scheduledPayments);
   $$NotificationsTableTableManager get notifications =>
       $$NotificationsTableTableManager(_db, _db.notifications);
   $$ChatSessionsTableTableManager get chatSessions =>

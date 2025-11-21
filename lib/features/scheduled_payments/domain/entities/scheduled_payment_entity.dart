@@ -6,6 +6,7 @@ class ScheduledPaymentEntity extends Equatable {
   final double amount;
   final String frequency;
   final DateTime nextPaymentDate;
+  final int? expenseId; // link to spending category
   final int? bankId;
   final String? serverId;
   final DateTime? createdAt;
@@ -18,6 +19,7 @@ class ScheduledPaymentEntity extends Equatable {
     required this.amount,
     required this.frequency,
     required this.nextPaymentDate,
+    this.expenseId,
     this.bankId,
     this.serverId,
     this.createdAt,
@@ -31,6 +33,7 @@ class ScheduledPaymentEntity extends Equatable {
     double? amount,
     String? frequency,
     DateTime? nextPaymentDate,
+    int? expenseId,
     int? bankId,
     String? serverId,
     DateTime? createdAt,
@@ -43,6 +46,7 @@ class ScheduledPaymentEntity extends Equatable {
       amount: amount ?? this.amount,
       frequency: frequency ?? this.frequency,
       nextPaymentDate: nextPaymentDate ?? this.nextPaymentDate,
+      expenseId: expenseId ?? this.expenseId,
       bankId: bankId ?? this.bankId,
       serverId: serverId ?? this.serverId,
       createdAt: createdAt ?? this.createdAt,
@@ -58,6 +62,7 @@ class ScheduledPaymentEntity extends Equatable {
     amount,
     frequency,
     nextPaymentDate,
+    expenseId,
     bankId,
     serverId,
     createdAt,

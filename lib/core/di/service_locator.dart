@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../database/app_database.dart';
 import '../network/api_client.dart';
 import '../sync/sync_service.dart';
+import '../services/scheduled_payment_notification_service.dart';
 import '../../features/banks/data/repositories/bank_repository_impl.dart';
 import '../../features/banks/domain/repositories/bank_repository.dart';
 import '../../features/banks/domain/entities/bank_entity.dart';
@@ -28,6 +29,8 @@ class ServiceLocator {
   late final AppDatabase _database;
   late final ApiClient _apiClient;
   late final SyncService _syncService;
+  late final ScheduledPaymentNotificationService
+  _scheduledPaymentNotificationService;
 
   // Repositories
   late final IBankRepository _bankRepository;
@@ -67,6 +70,14 @@ class ServiceLocator {
     _chatRepository = ChatRepositoryImpl(_database);
     print('  ✓ All repositories initialized');
 
+    print('  → Initializing scheduled payment notification service...');
+    _scheduledPaymentNotificationService = ScheduledPaymentNotificationService(
+      _scheduledPaymentRepository,
+      _notificationRepository,
+    );
+    _scheduledPaymentNotificationService.initialize();
+    print('  ✓ Scheduled payment notification service initialized');
+
     // Debug verification & optional seeding
     await _runDebugVerification();
 
@@ -103,6 +114,7 @@ class ServiceLocator {
 
   /// Cleanup resources
   Future<void> dispose() async {
+    _scheduledPaymentNotificationService.dispose();
     _syncService.dispose();
     await _database.close();
   }

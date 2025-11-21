@@ -10,6 +10,7 @@ class ScheduledPaymentMapper {
       amount: payment.amount,
       frequency: payment.frequency,
       nextPaymentDate: payment.nextPaymentDate,
+      expenseId: payment.expenseId,
       bankId: payment.bankId,
       serverId: payment.serverId,
       createdAt: payment.createdAt,
@@ -25,6 +26,7 @@ class ScheduledPaymentMapper {
       amount: Value(entity.amount),
       frequency: Value(entity.frequency),
       nextPaymentDate: Value(entity.nextPaymentDate),
+      expenseId: Value(entity.expenseId),
       bankId: Value(entity.bankId),
       serverId: Value(entity.serverId),
       createdAt: entity.createdAt != null

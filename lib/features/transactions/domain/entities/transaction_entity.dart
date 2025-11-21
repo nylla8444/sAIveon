@@ -11,6 +11,7 @@ class TransactionEntity extends Equatable {
   final int statusColor;
   final int? bankId; // source bank
   final int? toBankId; // destination bank for transfers
+  final int? scheduledPaymentId; // link to scheduled payment
   final DateTime date;
   final String? serverId;
   final DateTime? createdAt;
@@ -27,6 +28,7 @@ class TransactionEntity extends Equatable {
     required this.statusColor,
     this.bankId,
     this.toBankId,
+    this.scheduledPaymentId,
     required this.date,
     this.serverId,
     this.createdAt,
@@ -44,6 +46,7 @@ class TransactionEntity extends Equatable {
     int? statusColor,
     int? bankId,
     int? toBankId,
+    int? scheduledPaymentId,
     DateTime? date,
     String? serverId,
     DateTime? createdAt,
@@ -60,6 +63,7 @@ class TransactionEntity extends Equatable {
       statusColor: statusColor ?? this.statusColor,
       bankId: bankId ?? this.bankId,
       toBankId: toBankId ?? this.toBankId,
+      scheduledPaymentId: scheduledPaymentId ?? this.scheduledPaymentId,
       date: date ?? this.date,
       serverId: serverId ?? this.serverId,
       createdAt: createdAt ?? this.createdAt,
@@ -79,6 +83,7 @@ class TransactionEntity extends Equatable {
     statusColor,
     bankId,
     toBankId,
+    scheduledPaymentId,
     date,
     serverId,
     createdAt,

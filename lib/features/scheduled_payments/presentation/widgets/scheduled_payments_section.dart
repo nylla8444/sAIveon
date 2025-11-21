@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../domain/entities/scheduled_payment_entity.dart';
 
 class ScheduledPaymentData {
   final String title;
@@ -21,17 +23,76 @@ class ScheduledPaymentData {
 }
 
 class ScheduledPaymentsSection extends StatelessWidget {
-  final List<ScheduledPaymentData> payments;
+  final List<ScheduledPaymentEntity> payments;
   final VoidCallback? onSeeAllTap;
+  final Function(ScheduledPaymentEntity)? onPaymentTap;
 
   const ScheduledPaymentsSection({
     super.key,
     required this.payments,
     this.onSeeAllTap,
+    this.onPaymentTap,
   });
+
+  IconData _getIconFromName(String name) {
+    final nameLower = name.toLowerCase();
+    if (nameLower.contains('car') || nameLower.contains('vehicle')) {
+      return Icons.directions_car;
+    } else if (nameLower.contains('internet') || nameLower.contains('wifi')) {
+      return Icons.wifi;
+    } else if (nameLower.contains('home') || nameLower.contains('rent') || nameLower.contains('house')) {
+      return Icons.home;
+    } else if (nameLower.contains('phone') || nameLower.contains('mobile')) {
+      return Icons.phone;
+    } else if (nameLower.contains('electric') || nameLower.contains('power')) {
+      return Icons.electric_bolt;
+    } else if (nameLower.contains('water')) {
+      return Icons.water_drop;
+    } else if (nameLower.contains('insurance') || nameLower.contains('health')) {
+      return Icons.health_and_safety;
+    } else {
+      return Icons.payment;
+    }
+  }
+
+  String _getStatusText(DateTime dueDate) {
+    final now = DateTime.now();
+    final difference = dueDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+    
+    if (difference < 0) {
+      return 'Overdue';
+    } else if (difference == 0) {
+      return 'Due today';
+    } else if (difference == 1) {
+      return 'Due tomorrow';
+    } else {
+      return 'Due in $difference days';
+    }
+  }
+
+  bool _isOverdue(DateTime dueDate) {
+    final now = DateTime.now();
+    return dueDate.isBefore(DateTime(now.year, now.month, now.day));
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Convert entities to display data
+    final displayPayments = payments.map((payment) {
+      return ScheduledPaymentData(
+        title: payment.name,
+        amount: '-\$${payment.amount.toStringAsFixed(0)}',
+        status: _getStatusText(payment.nextPaymentDate),
+        date: DateFormat('d MMM').format(payment.nextPaymentDate),
+        isOverdue: _isOverdue(payment.nextPaymentDate),
+        icon: _getIconFromName(payment.name),
+        onTap: onPaymentTap != null ? () => onPaymentTap!(payment) : null,
+      );
+    }).toList();
+
+    // Show only first 3 payments
+    final displayedPayments = displayPayments.take(3).toList();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -76,17 +137,30 @@ class ScheduledPaymentsSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Payment items
-          ...payments.asMap().entries.map((entry) {
-            final index = entry.key;
-            final payment = entry.value;
-            return Column(
-              children: [
-                PaymentItem(payment: payment),
-                if (index < payments.length - 1) const SizedBox(height: 9),
-              ],
-            );
-          }),
+          // Payment items or empty state
+          if (displayedPayments.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text(
+                'No scheduled payments',
+                style: TextStyle(
+                  color: Color(0xFF949494),
+                  fontSize: 12,
+                  fontFamily: 'Manrope',
+                ),
+              ),
+            )
+          else
+            ...displayedPayments.asMap().entries.map((entry) {
+              final index = entry.key;
+              final payment = entry.value;
+              return Column(
+                children: [
+                  PaymentItem(payment: payment),
+                  if (index < displayedPayments.length - 1) const SizedBox(height: 9),
+                ],
+              );
+            }),
         ],
       ),
     );
