@@ -4,6 +4,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import '../../../../core/widgets/index.dart';
 import '../../../../core/config/env.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../domain/services/financial_data_service.dart';
 
 class NewChatPage extends StatefulWidget {
   const NewChatPage({super.key});
@@ -14,11 +16,46 @@ class NewChatPage extends StatefulWidget {
 
 class _NewChatPageState extends State<NewChatPage> {
   late final LlmProvider _provider;
+  late final FinancialDataService _financialDataService;
+  String _financialContext = 'Loading your financial data in the background...';
 
   @override
   void initState() {
     super.initState();
     _initializeProvider();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Load financial data after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFinancialData();
+    });
+  }
+
+  Future<void> _loadFinancialData() async {
+    if (!mounted) return;
+
+    final database = ServiceProvider.of(context).database;
+    _financialDataService = FinancialDataService(database);
+
+    try {
+      final data = await _financialDataService.getFinancialSummary();
+      if (mounted) {
+        setState(() {
+          _financialContext = data;
+        });
+        // Reinitialize provider with actual data
+        _initializeProvider();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _financialContext = 'Unable to load financial data: $e';
+        });
+      }
+    }
   }
 
   void _initializeProvider() {
@@ -27,16 +64,35 @@ class _NewChatPageState extends State<NewChatPage> {
       throw Exception('GEMINI_API_KEY not found in .env file');
     }
 
+    final systemPrompt =
+        '''You are an expert financial advisor and personal finance assistant. 
+
+You have access to the user's complete financial data including:
+- Bank accounts and balances
+- Transaction history
+- Budget allocations and spending
+- Scheduled payments
+- Financial trends and insights
+
+IMPORTANT GUIDELINES:
+1. Analyze the user's actual financial data to provide personalized advice
+2. Be specific and reference their real numbers when giving recommendations
+3. Alert them to overspending, budget issues, or unusual patterns
+4. Suggest concrete actions based on their spending habits
+5. Help them set realistic financial goals based on their income/expenses
+6. Explain financial concepts clearly and avoid jargon
+7. Be encouraging and supportive, especially about financial challenges
+8. Protect their privacy - never share or expose their data externally
+
+Current Financial Data:
+$_financialContext
+
+Use this data to provide informed, personalized financial guidance.''';
+
     final model = GenerativeModel(
       model: 'gemini-2.0-flash-lite',
       apiKey: apiKey,
-      systemInstruction: Content.system(
-        'You are a helpful financial assistant for a personal finance app. '
-        'Help users with budgeting, saving, investing, expense tracking, and financial planning. '
-        'Provide practical, actionable advice tailored to their financial goals. '
-        'Be concise, friendly, and supportive. When discussing specific amounts or strategies, '
-        'ask clarifying questions if needed to give personalized recommendations.',
-      ),
+      systemInstruction: Content.system(systemPrompt),
     );
 
     _provider = _GeminiLlmProvider(model);
@@ -57,13 +113,23 @@ class _NewChatPageState extends State<NewChatPage> {
                   const CustomBackButton(),
                   const SizedBox(width: 12),
                   const Text(
-                    'AI Chat',
+                    'AI Financial Advisor',
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
+                  ),
+                  const Spacer(),
+                  // Refresh button to reload financial data
+                  IconButton(
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Color(0xFFBA9BFF),
+                      size: 24,
+                    ),
+                    onPressed: _loadFinancialData,
                   ),
                 ],
               ),
