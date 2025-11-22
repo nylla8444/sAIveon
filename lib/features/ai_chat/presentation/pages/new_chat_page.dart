@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_ai_toolkit/flutter_ai_toolkit.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 import '../../../../core/widgets/index.dart';
-import 'chat_session_page.dart';
+import '../../../../core/config/env.dart';
 
 class NewChatPage extends StatefulWidget {
   const NewChatPage({super.key});
@@ -11,23 +13,33 @@ class NewChatPage extends StatefulWidget {
 }
 
 class _NewChatPageState extends State<NewChatPage> {
-  final TextEditingController _controller = TextEditingController();
-
-  void _startChat(String initialPrompt) {
-    final prompt = initialPrompt.trim();
-    if (prompt.isEmpty) return; // no empty chat
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChatSessionPage(initialPrompt: prompt),
-      ),
-    );
-  }
+  late final LlmProvider _provider;
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _initializeProvider();
+  }
+
+  void _initializeProvider() {
+    final apiKey = Env.geminiApiKey;
+    if (apiKey.isEmpty) {
+      throw Exception('GEMINI_API_KEY not found in .env file');
+    }
+
+    final model = GenerativeModel(
+      model: 'gemini-2.0-flash-lite',
+      apiKey: apiKey,
+      systemInstruction: Content.system(
+        'You are a helpful financial assistant for a personal finance app. '
+        'Help users with budgeting, saving, investing, expense tracking, and financial planning. '
+        'Provide practical, actionable advice tailored to their financial goals. '
+        'Be concise, friendly, and supportive. When discussing specific amounts or strategies, '
+        'ask clarifying questions if needed to give personalized recommendations.',
+      ),
+    );
+
+    _provider = _GeminiLlmProvider(model);
   }
 
   @override
@@ -36,7 +48,6 @@ class _NewChatPageState extends State<NewChatPage> {
       backgroundColor: const Color(0xFF050505),
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Padding(
@@ -57,115 +68,100 @@ class _NewChatPageState extends State<NewChatPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 40),
-            // Center AI icon (SVG, same as AI welcome section)
-            Center(
-              child: SizedBox(
-                width: 66,
-                height: 68,
-                child: SvgPicture.asset(
-                  'assets/images/ai_icon.svg',
-                  width: 66,
-                  height: 68,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
-            // Suggestion cards scroll
+            const SizedBox(height: 20),
+            // AI Chat View
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 34),
-                child: Column(
-                  children: [
-                    _PromptSuggestionCard(
-                      text: 'Help me set a monthly savings  goal',
-                      onTap: () =>
-                          _startChat('Help me set a monthly savings goal'),
+              child: Theme(
+                data: ThemeData.dark().copyWith(
+                  textTheme: const TextTheme(
+                    bodyLarge: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFFFFFFFF),
+                      height: 1.5,
                     ),
-                    const SizedBox(height: 8),
-                    _PromptSuggestionCard(
-                      text:
-                          'Can you recommend investment strategies \nfor long-term growth?',
-                      onTap: () => _startChat(
-                        'Can you recommend investment strategies for long-term growth?',
-                      ),
+                    bodyMedium: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFFFFFFFF),
+                      height: 1.5,
                     ),
-                    const SizedBox(height: 8),
-                    _PromptSuggestionCard(
-                      text:
-                          'What’s the best way to save for a major \npurchase?',
-                      onTap: () => _startChat(
-                        'What’s the best way to save for a major purchase?',
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            // Bottom fixed input + send button
-            Padding(
-              padding: const EdgeInsets.fromLTRB(33, 0, 33, 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 43,
+                child: LlmChatView(
+                  provider: _provider,
+                  responseBuilder: (context, response) {
+                    return Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: GptMarkdown(
+                        response,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFFFFFFFF),
+                          height: 1.5,
+                        ),
+                      ),
+                    );
+                  },
+                  style: LlmChatViewStyle(
+                    backgroundColor: const Color(0xFF050505),
+                    menuColor: const Color(0xFF101010),
+                    progressIndicatorColor: const Color(0xFFBA9BFF),
+                    userMessageStyle: UserMessageStyle(
+                      textStyle: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFFFFFFF),
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xF86A4AAD),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    llmMessageStyle: const LlmMessageStyle(
+                      decoration: BoxDecoration(
+                        color: Color(0xFF101010),
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                        border: Border.fromBorderSide(
+                          BorderSide(color: Color(0x1AFFFFFF), width: 1),
+                        ),
+                      ),
+                      iconColor: Color(0xFFBA9BFF),
+                    ),
+                    chatInputStyle: ChatInputStyle(
+                      backgroundColor: const Color(0xFF101010),
+                      textStyle: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFFFFFFF),
+                      ),
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF949494),
+                      ),
+                      hintText: 'Ask me anything...',
                       decoration: BoxDecoration(
                         color: const Color(0xFF101010),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: Colors.white.withOpacity(0.2),
                           width: 1,
                         ),
                       ),
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: TextField(
-                        controller: _controller,
-                        style: const TextStyle(
-                          fontFamily: 'Manrope',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFD6D6D6),
-                          height: 1.366,
-                        ),
-                        decoration: const InputDecoration(
-                          isCollapsed: true,
-                          border: InputBorder.none,
-                          hintText: 'Type your message...',
-                          hintStyle: TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF949494),
-                            height: 1.366,
-                          ),
-                        ),
-                        onSubmitted: (_) => _startChat(_controller.text),
-                      ),
+                    ),
+                    submitButtonStyle: ActionButtonStyle(
+                      iconColor: const Color(0xFFBA9BFF),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => _startChat(_controller.text),
-                    child: Container(
-                      width: 43,
-                      height: 43,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFBA9BFF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.play_arrow,
-                        color: Colors.black,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -175,36 +171,66 @@ class _NewChatPageState extends State<NewChatPage> {
   }
 }
 
-class _PromptSuggestionCard extends StatelessWidget {
-  final String text;
-  final VoidCallback onTap;
-  const _PromptSuggestionCard({required this.text, required this.onTap});
+// Custom Gemini provider implementation for flutter_ai_toolkit
+class _GeminiLlmProvider extends LlmProvider with ChangeNotifier {
+  _GeminiLlmProvider(this._model);
+
+  final GenerativeModel _model;
+  late final ChatSession _chat = _model.startChat();
+  final List<ChatMessage> _history = [];
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 61,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: const Color(0xFF101010),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 15),
-        alignment: Alignment.centerLeft,
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontFamily: 'Manrope',
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFFD6D6D6),
-            height: 1.366,
-          ),
-        ),
-      ),
-    );
+  Iterable<ChatMessage> get history => _history;
+
+  @override
+  set history(Iterable<ChatMessage> value) {
+    _history.clear();
+    _history.addAll(value);
+    notifyListeners();
+  }
+
+  @override
+  Stream<String> generateStream(
+    String prompt, {
+    Iterable<Attachment> attachments = const [],
+  }) async* {
+    final content = _buildContent(prompt, attachments);
+    final response = _model.generateContentStream([content]);
+
+    await for (final chunk in response) {
+      final text = chunk.text;
+      if (text != null) {
+        yield text;
+      }
+    }
+  }
+
+  @override
+  Stream<String> sendMessageStream(
+    String prompt, {
+    Iterable<Attachment> attachments = const [],
+  }) async* {
+    // Add user message to history
+    final userMessage = ChatMessage.user(prompt, attachments);
+    final llmMessage = ChatMessage.llm();
+    _history.addAll([userMessage, llmMessage]);
+
+    // Send message to Gemini
+    final content = _buildContent(prompt, attachments);
+    final response = _chat.sendMessageStream(content);
+
+    await for (final chunk in response) {
+      final text = chunk.text;
+      if (text != null) {
+        llmMessage.append(text);
+        yield text;
+      }
+    }
+
+    notifyListeners();
+  }
+
+  Content _buildContent(String prompt, Iterable<Attachment> attachments) {
+    return Content.text(prompt);
   }
 }
