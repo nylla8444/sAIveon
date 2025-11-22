@@ -167,6 +167,37 @@ class _EditBankPageState extends State<EditBankPage> {
                           ),
                         ),
                       ),
+
+                      // Delete button
+                      if (widget.bankId != null) ...[
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: _onDelete,
+                          child: Container(
+                            width: double.infinity,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFFF8282),
+                                width: 2,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Delete Bank/Wallet',
+                              style: TextStyle(
+                                fontFamily: 'Manrope',
+                                color: Color(0xFFFF8282),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                height: 1.366,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -370,6 +401,95 @@ class _EditBankPageState extends State<EditBankPage> {
       print('🟥 ${red}[DB] UPDATE_BANK_ERROR: $e${reset}');
       print('🟥 ${red}$st${reset}');
       _showSnack('Failed to save changes: $e');
+    }
+  }
+
+  Future<void> _onDelete() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF191919),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            'Delete Bank/Wallet',
+            style: TextStyle(
+              color: Color(0xFFD6D6D6),
+              fontFamily: 'Manrope',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete "${_nameController.text}"? This action cannot be undone.',
+            style: const TextStyle(
+              color: Color(0xFF949494),
+              fontFamily: 'Manrope',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Color(0xFF949494),
+                  fontFamily: 'Manrope',
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                'Delete',
+                style: TextStyle(
+                  color: Color(0xFFFF8282),
+                  fontFamily: 'Manrope',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || widget.bankId == null) return;
+
+    // ANSI + emoji tags for visibility in VS Code terminal
+    const red = '\x1B[31m';
+    const green = '\x1B[32m';
+    const yellow = '\x1B[33m';
+    const reset = '\x1B[0m';
+
+    try {
+      final locator = ServiceProvider.of(context);
+      final id = widget.bankId!;
+
+      print('🟨 ${yellow}[DB] DELETE_BANK_REQUEST id=$id${reset}');
+
+      await locator.bankRepository.deleteBank(id);
+
+      print('🟩 ${green}[DB] DELETE_BANK_SUCCESS id=$id${reset}');
+
+      if (mounted) {
+        // Pop twice to go back to the main page (detail page -> edit page)
+        Navigator.pop(context); // Close edit page
+        Navigator.pop(context); // Close detail page
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bank/Wallet deleted successfully'),
+            backgroundColor: Color(0xFFFF8282),
+          ),
+        );
+      }
+    } catch (e, st) {
+      print('🟥 ${red}[DB] DELETE_BANK_ERROR: $e${reset}');
+      print('🟥 ${red}$st${reset}');
+      _showSnack('Failed to delete bank/wallet: $e');
     }
   }
 
