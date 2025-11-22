@@ -40,7 +40,9 @@ class ScheduledPaymentsSection extends StatelessWidget {
       return Icons.directions_car;
     } else if (nameLower.contains('internet') || nameLower.contains('wifi')) {
       return Icons.wifi;
-    } else if (nameLower.contains('home') || nameLower.contains('rent') || nameLower.contains('house')) {
+    } else if (nameLower.contains('home') ||
+        nameLower.contains('rent') ||
+        nameLower.contains('house')) {
       return Icons.home;
     } else if (nameLower.contains('phone') || nameLower.contains('mobile')) {
       return Icons.phone;
@@ -48,7 +50,8 @@ class ScheduledPaymentsSection extends StatelessWidget {
       return Icons.electric_bolt;
     } else if (nameLower.contains('water')) {
       return Icons.water_drop;
-    } else if (nameLower.contains('insurance') || nameLower.contains('health')) {
+    } else if (nameLower.contains('insurance') ||
+        nameLower.contains('health')) {
       return Icons.health_and_safety;
     } else {
       return Icons.payment;
@@ -57,8 +60,10 @@ class ScheduledPaymentsSection extends StatelessWidget {
 
   String _getStatusText(DateTime dueDate) {
     final now = DateTime.now();
-    final difference = dueDate.difference(DateTime(now.year, now.month, now.day)).inDays;
-    
+    final difference = dueDate
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
+
     if (difference < 0) {
       return 'Overdue';
     } else if (difference == 0) {
@@ -157,7 +162,8 @@ class ScheduledPaymentsSection extends StatelessWidget {
               return Column(
                 children: [
                   PaymentItem(payment: payment),
-                  if (index < displayedPayments.length - 1) const SizedBox(height: 9),
+                  if (index < displayedPayments.length - 1)
+                    const SizedBox(height: 9),
                 ],
               );
             }),

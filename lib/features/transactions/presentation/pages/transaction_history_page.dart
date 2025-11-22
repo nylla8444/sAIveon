@@ -299,6 +299,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                     bankId: t.bankId,
                     type: t.type,
                     rawAmount: t.amount,
+                    scheduledPaymentId: t.scheduledPaymentId,
                   );
                 }).toList();
                 return Column(
@@ -660,15 +661,32 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  transaction.category,
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    color: Color(0xFFE6E6E6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    height: 1.366,
-                  ),
+                Row(
+                  children: [
+                    if (transaction.scheduledPaymentId != null) ...[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF82FFB4),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Expanded(
+                      child: Text(
+                        transaction.category,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          color: Color(0xFFE6E6E6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          height: 1.366,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -909,6 +927,7 @@ class _TransactionData {
   final int? bankId;
   final String type;
   final double rawAmount;
+  final int? scheduledPaymentId;
 
   _TransactionData({
     required this.id,
@@ -921,5 +940,6 @@ class _TransactionData {
     required this.bankId,
     required this.type,
     required this.rawAmount,
+    this.scheduledPaymentId,
   });
 }

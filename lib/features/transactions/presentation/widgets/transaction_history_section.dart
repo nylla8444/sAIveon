@@ -217,15 +217,32 @@ class _TransactionHistorySectionState extends State<TransactionHistorySection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  transaction.title,
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    color: Color(0xFFE6E6E6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    height: 1.366,
-                  ),
+                Row(
+                  children: [
+                    if (transaction.scheduledPaymentId != null) ...[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF82FFB4),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Expanded(
+                      child: Text(
+                        transaction.title,
+                        style: const TextStyle(
+                          fontFamily: 'Manrope',
+                          color: Color(0xFFE6E6E6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          height: 1.366,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -355,6 +372,7 @@ class TransactionData {
   final String type;
   final double rawAmount;
   final int? bankId;
+  final int? scheduledPaymentId; // Track if from scheduled payment
   final IconData? icon;
   final VoidCallback? onTap;
 
@@ -368,6 +386,7 @@ class TransactionData {
     required this.type,
     required this.rawAmount,
     required this.bankId,
+    this.scheduledPaymentId,
     this.icon,
     this.onTap,
   });

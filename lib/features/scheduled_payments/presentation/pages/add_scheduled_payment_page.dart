@@ -16,7 +16,6 @@ class _AddScheduledPaymentPageState extends State<AddScheduledPaymentPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _dueDateController = TextEditingController();
-  IconData _selectedIcon = Icons.payment;
   DateTime? _selectedDate;
   String _selectedFrequency = 'once';
   ExpenseEntity? _selectedExpense;
@@ -28,103 +27,12 @@ class _AddScheduledPaymentPageState extends State<AddScheduledPaymentPage> {
     {'value': 'yearly', 'label': 'Yearly'},
   ];
 
-  final List<Map<String, dynamic>> _iconOptions = [
-    {'icon': Icons.payment, 'label': 'Payment'},
-    {'icon': Icons.directions_car, 'label': 'Car'},
-    {'icon': Icons.wifi, 'label': 'Internet'},
-    {'icon': Icons.home, 'label': 'Home'},
-    {'icon': Icons.phone, 'label': 'Phone'},
-    {'icon': Icons.electric_bolt, 'label': 'Electric'},
-    {'icon': Icons.water_drop, 'label': 'Water'},
-    {'icon': Icons.health_and_safety, 'label': 'Insurance'},
-  ];
-
   @override
   void dispose() {
     _titleController.dispose();
     _amountController.dispose();
     _dueDateController.dispose();
     super.dispose();
-  }
-
-  void _showIconPicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF191919),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          height: 300,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Select Icon',
-                style: TextStyle(
-                  color: Color(0xFFD6D6D6),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Manrope',
-                ),
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                  ),
-                  itemCount: _iconOptions.length,
-                  itemBuilder: (context, index) {
-                    final iconData = _iconOptions[index];
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedIcon = iconData['icon'] as IconData;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: _selectedIcon == iconData['icon']
-                                  ? const Color(0xFFBA9BFF)
-                                  : const Color(0xFF2A2A2A),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              iconData['icon'] as IconData,
-                              color: const Color(0xFFD6D6D6),
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            iconData['label'] as String,
-                            style: const TextStyle(
-                              color: Color(0xFF949494),
-                              fontSize: 10,
-                              fontFamily: 'Manrope',
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _showCategoryPicker() async {
@@ -277,68 +185,6 @@ class _AddScheduledPaymentPageState extends State<AddScheduledPaymentPage> {
                 ),
 
                 const SizedBox(height: 40),
-
-                // Icon selector
-                const Text(
-                  'Icon',
-                  style: TextStyle(
-                    color: Color(0xFFD6D6D6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Manrope',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: _showIconPicker,
-                  child: Container(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF191919),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFD6D6D6).withOpacity(0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 15),
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFFFFFF),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _selectedIcon,
-                            color: const Color(0xFF191919),
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Tap to select icon',
-                          style: TextStyle(
-                            color: Color(0xFF949494),
-                            fontSize: 14,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        const Spacer(),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: Color(0xFF949494),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 15),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
 
                 // Category selector
                 const Text(

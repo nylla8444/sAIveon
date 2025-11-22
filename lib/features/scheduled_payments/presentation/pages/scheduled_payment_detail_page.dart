@@ -730,12 +730,21 @@ class _ScheduledPaymentDetailPageState
               ),
             ),
 
-            // Description with scheduled icon
+            // Description with green circle indicator
             Positioned(
               left: 51,
               top: 47,
               child: Row(
                 children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF82FFB4),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     description,
                     style: const TextStyle(
@@ -745,12 +754,6 @@ class _ScheduledPaymentDetailPageState
                       fontFamily: 'Manrope',
                       height: 1.366,
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Icon(
-                    Icons.event_repeat,
-                    color: Color(0xFFBA9BFF),
-                    size: 14,
                   ),
                 ],
               ),

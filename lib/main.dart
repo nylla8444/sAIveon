@@ -331,6 +331,7 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                                 type: t.type,
                                 rawAmount: t.amount,
                                 bankId: t.bankId,
+                                scheduledPaymentId: t.scheduledPaymentId,
                                 icon: _iconForTransaction(t.type),
                               );
                             }).toList();
