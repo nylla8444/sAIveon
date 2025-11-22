@@ -11,9 +11,7 @@ class NewChatPage extends StatefulWidget {
 }
 
 class _NewChatPageState extends State<NewChatPage> {
-  final TextEditingController _controller = TextEditingController(
-    text: 'Help me set a monthly savings goal',
-  );
+  final TextEditingController _controller = TextEditingController();
 
   void _startChat(String initialPrompt) {
     final prompt = initialPrompt.trim();

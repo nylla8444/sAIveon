@@ -16,8 +16,12 @@ import 'features/home/home.dart';
 import 'features/settings/settings.dart';
 import 'features/notifications/notifications.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await Env.load();
+
   runApp(const MyApp());
 }
 
