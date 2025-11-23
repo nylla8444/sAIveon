@@ -6,10 +6,17 @@ import '../../../expenses/presentation/widgets/expenses_value_section.dart';
 import '../widgets/last_6_periods_section.dart';
 import '../../../banks/presentation/widgets/balance_with_banks_section.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../banks/presentation/pages/bank_detail_page.dart';
 
-class StatisticsPage extends StatelessWidget {
+class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
 
+  @override
+  State<StatisticsPage> createState() => _StatisticsPageState();
+}
+
+class _StatisticsPageState extends State<StatisticsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,37 +43,132 @@ class StatisticsPage extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // Income and Expenses Section
-                IncomeExpensesSection(
-                  incomePercentage: '+5%',
-                  expensesPercentage: '-2%',
-                  onIncomeTap: () {
-                    // TODO: Navigate to income details
-                  },
-                  onExpensesTap: () {
-                    // TODO: Navigate to expenses details
-                  },
-                ),
+                // Income and Expenses Section - Connected to real data
+                StreamBuilder<List<dynamic>>(
+                  stream: ServiceProvider.of(
+                    context,
+                  ).transactionRepository.watchAllTransactions(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const SizedBox.shrink();
+                    }
 
-                const SizedBox(height: 30),
+                    final now = DateTime.now();
+                    final currentMonthStart = DateTime(now.year, now.month, 1);
+                    final lastMonthStart = DateTime(now.year, now.month - 1, 1);
+                    final lastMonthEnd = DateTime(
+                      now.year,
+                      now.month,
+                      0,
+                      23,
+                      59,
+                      59,
+                    );
 
-                // Income Value Section with Progress Bar
-                IncomeValueSection(
-                  amount: '\$1,234',
-                  progress: 0.56, // 56% progress (160/287 from Figma)
-                  onTap: () {
-                    // TODO: Navigate to income details
-                  },
-                ),
+                    final transactions = snapshot.data!
+                        .where((t) => !t.isDeleted)
+                        .toList();
+                    final currencyService = ServiceProvider.of(
+                      context,
+                    ).currencyService;
 
-                const SizedBox(height: 15),
+                    // Current month income and expenses
+                    double currentIncome = 0;
+                    double currentExpenses = 0;
 
-                // Expenses Value Section with Progress Bar
-                ExpensesValueSection(
-                  amount: '\$1,743',
-                  progress: 0.79, // 79% progress (228/287 from Figma)
-                  onTap: () {
-                    // TODO: Navigate to expenses details
+                    for (var tx in transactions) {
+                      if (tx.date.isAfter(currentMonthStart) &&
+                          tx.date.isBefore(now)) {
+                        if (tx.type == 'receive') {
+                          currentIncome += tx.amount;
+                        } else if (tx.type == 'send') {
+                          currentExpenses += tx.amount;
+                        }
+                      }
+                    }
+
+                    // Last month income and expenses
+                    double lastIncome = 0;
+                    double lastExpenses = 0;
+
+                    for (var tx in transactions) {
+                      if (tx.date.isAfter(lastMonthStart) &&
+                          tx.date.isBefore(lastMonthEnd)) {
+                        if (tx.type == 'receive') {
+                          lastIncome += tx.amount;
+                        } else if (tx.type == 'send') {
+                          lastExpenses += tx.amount;
+                        }
+                      }
+                    }
+
+                    // Calculate percentage changes
+                    final incomeChange = lastIncome > 0
+                        ? ((currentIncome - lastIncome) / lastIncome * 100)
+                        : (currentIncome > 0 ? 100.0 : 0.0);
+                    final expensesChange = lastExpenses > 0
+                        ? ((currentExpenses - lastExpenses) /
+                              lastExpenses *
+                              100)
+                        : (currentExpenses > 0 ? 100.0 : 0.0);
+
+                    final incomePercentage =
+                        '${incomeChange >= 0 ? '+' : ''}${incomeChange.toStringAsFixed(0)}%';
+                    final expensesPercentage =
+                        '${expensesChange >= 0 ? '+' : ''}${expensesChange.toStringAsFixed(0)}%';
+
+                    // Calculate progress bars (relative to max value)
+                    final maxIncome = currentIncome > lastIncome
+                        ? currentIncome
+                        : lastIncome;
+                    final maxExpenses = currentExpenses > lastExpenses
+                        ? currentExpenses
+                        : lastExpenses;
+
+                    final incomeProgress = maxIncome > 0
+                        ? (currentIncome / maxIncome).clamp(0.0, 1.0)
+                        : 0.0;
+                    final expensesProgress = maxExpenses > 0
+                        ? (currentExpenses / maxExpenses).clamp(0.0, 1.0)
+                        : 0.0;
+
+                    return Column(
+                      children: [
+                        // Income and Expenses Section
+                        IncomeExpensesSection(
+                          incomePercentage: incomePercentage,
+                          expensesPercentage: expensesPercentage,
+                          onIncomeTap: () {
+                            // TODO: Navigate to income details
+                          },
+                          onExpensesTap: () {
+                            // TODO: Navigate to expenses details
+                          },
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // Income Value Section with Progress Bar
+                        IncomeValueSection(
+                          amount: currencyService.formatWhole(currentIncome),
+                          progress: incomeProgress,
+                          onTap: () {
+                            // TODO: Navigate to income details
+                          },
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        // Expenses Value Section with Progress Bar
+                        ExpensesValueSection(
+                          amount: currencyService.formatWhole(currentExpenses),
+                          progress: expensesProgress,
+                          onTap: () {
+                            // TODO: Navigate to expenses details
+                          },
+                        ),
+                      ],
+                    );
                   },
                 ),
 
@@ -110,43 +212,51 @@ class StatisticsPage extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // Balance with Banks Section
-                BalanceWithBanksSection(
-                  totalBalance: '\$888.00',
-                  banks: [
-                    BankBalanceData(
-                      bankName: 'Bank A',
-                      amount: '\$120',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        // TODO: Navigate to Bank A details
-                      },
-                    ),
-                    BankBalanceData(
-                      bankName: 'Bank B',
-                      amount: '\$440',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        // TODO: Navigate to Bank B details
-                      },
-                    ),
-                    BankBalanceData(
-                      bankName: 'Bank C',
-                      amount: '\$154',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        // TODO: Navigate to Bank C details
-                      },
-                    ),
-                    BankBalanceData(
-                      bankName: 'Bank D',
-                      amount: '\$174',
-                      icon: Icons.account_balance,
-                      onTap: () {
-                        // TODO: Navigate to Bank D details
-                      },
-                    ),
-                  ],
+                // Balance with Banks Section - Connected to real data
+                StreamBuilder<List<dynamic>>(
+                  stream: ServiceProvider.of(
+                    context,
+                  ).bankRepository.watchAllBanks(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const SizedBox.shrink();
+                    }
+
+                    final banks = snapshot.data!
+                        .where((b) => !b.isDeleted)
+                        .toList();
+                    final currencyService = ServiceProvider.of(
+                      context,
+                    ).currencyService;
+
+                    final totalBalance = banks.fold<double>(
+                      0,
+                      (sum, bank) => sum + bank.balance,
+                    );
+
+                    return BalanceWithBanksSection(
+                      totalBalance: currencyService.format(totalBalance),
+                      banks: banks.map((bank) {
+                        return BankBalanceData(
+                          bankName: bank.name,
+                          amount: currencyService.format(bank.balance),
+                          icon: Icons.account_balance,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BankDetailPage(
+                                  bankId: bank.id,
+                                  bankName: bank.name,
+                                  balance: currencyService.format(bank.balance),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }).toList(),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 100),

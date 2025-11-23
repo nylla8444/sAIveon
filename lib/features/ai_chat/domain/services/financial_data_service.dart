@@ -1,16 +1,16 @@
 import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/services/currency_service.dart';
 
 /// Service to gather and format financial data for AI analysis
 ///
-/// Note: This service uses hardcoded $ symbols in the data sent to AI.
-/// This is intentional as the AI model expects consistent currency formatting.
-/// User-facing UI components use the CurrencyService for dynamic currency display.
+/// Note: This service now uses dynamic currency formatting from CurrencyService.
 class FinancialDataService {
   final AppDatabase _database;
+  final CurrencyService _currencyService;
 
-  FinancialDataService(this._database);
+  FinancialDataService(this._database, this._currencyService);
 
   /// Get comprehensive financial summary for AI context
   Future<String> getFinancialSummary() async {
@@ -64,12 +64,12 @@ class FinancialDataService {
 
     for (var bank in banks) {
       buffer.writeln(
-        '- ${bank.name} (${bank.accountNumber}): \$${bank.balance.toStringAsFixed(2)}',
+        '- ${bank.name} (${bank.accountNumber}): ${_currencyService.format(bank.balance)}',
       );
       totalBalance += bank.balance;
     }
 
-    buffer.writeln('\nTotal Balance: \$${totalBalance.toStringAsFixed(2)}');
+    buffer.writeln('\nTotal Balance: ${_currencyService.format(totalBalance)}');
     return buffer.toString();
   }
 
@@ -103,7 +103,7 @@ class FinancialDataService {
           : (tx.type == 'send' ? '💸' : '🔄');
 
       buffer.writeln(
-        '$typeEmoji ${tx.name}: \$${tx.amount.toStringAsFixed(2)} - $dateStr',
+        '$typeEmoji ${tx.name}: ${_currencyService.format(tx.amount)} - $dateStr',
       );
 
       if (tx.type == 'receive') {
@@ -116,11 +116,11 @@ class FinancialDataService {
     }
 
     buffer.writeln('\nSummary:');
-    buffer.writeln('- Income: \$${totalIncome.toStringAsFixed(2)}');
-    buffer.writeln('- Spending: \$${totalSpending.toStringAsFixed(2)}');
-    buffer.writeln('- Transfers: \$${totalTransfers.toStringAsFixed(2)}');
+    buffer.writeln('- Income: ${_currencyService.format(totalIncome)}');
+    buffer.writeln('- Spending: ${_currencyService.format(totalSpending)}');
+    buffer.writeln('- Transfers: ${_currencyService.format(totalTransfers)}');
     buffer.writeln(
-      '- Net: \$${(totalIncome - totalSpending).toStringAsFixed(2)}',
+      '- Net: ${_currencyService.format(totalIncome - totalSpending)}',
     );
 
     return buffer.toString();
@@ -153,17 +153,17 @@ class FinancialDataService {
       final status = percentage >= 90 ? '⚠️' : (percentage >= 70 ? '⚡' : '✅');
 
       buffer.writeln(
-        '$status ${budget.category}: \$${budget.spentAmount.toStringAsFixed(2)} / \$${budget.budgetAmount.toStringAsFixed(2)} (${percentage.toStringAsFixed(0)}% used, \$${remaining.toStringAsFixed(2)} remaining)',
+        '$status ${budget.category}: ${_currencyService.format(budget.spentAmount)} / ${_currencyService.format(budget.budgetAmount)} (${percentage.toStringAsFixed(0)}% used, ${_currencyService.format(remaining)} remaining)',
       );
 
       totalBudget += budget.budgetAmount;
       totalSpent += budget.spentAmount;
     }
 
-    buffer.writeln('\nTotal Budget: \$${totalBudget.toStringAsFixed(2)}');
-    buffer.writeln('Total Spent: \$${totalSpent.toStringAsFixed(2)}');
+    buffer.writeln('\nTotal Budget: ${_currencyService.format(totalBudget)}');
+    buffer.writeln('Total Spent: ${_currencyService.format(totalSpent)}');
     buffer.writeln(
-      'Remaining: \$${(totalBudget - totalSpent).toStringAsFixed(2)}',
+      'Remaining: ${_currencyService.format(totalBudget - totalSpent)}',
     );
 
     return buffer.toString();
@@ -203,11 +203,13 @@ class FinancialDataService {
     for (var entry in sortedCategories) {
       final percentage = (entry.value / totalExpenses * 100);
       buffer.writeln(
-        '- ${entry.key}: \$${entry.value.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
+        '- ${entry.key}: ${_currencyService.format(entry.value)} (${percentage.toStringAsFixed(1)}%)',
       );
     }
 
-    buffer.writeln('\nTotal Expenses: \$${totalExpenses.toStringAsFixed(2)}');
+    buffer.writeln(
+      '\nTotal Expenses: ${_currencyService.format(totalExpenses)}',
+    );
 
     return buffer.toString();
   }
@@ -235,12 +237,14 @@ class FinancialDataService {
           .inDays;
 
       buffer.writeln(
-        '- ${payment.name}: \$${payment.amount.toStringAsFixed(2)} - $dateStr (${payment.frequency}, in $daysUntil days)',
+        '- ${payment.name}: ${_currencyService.format(payment.amount)} - $dateStr (${payment.frequency}, in $daysUntil days)',
       );
       totalUpcoming += payment.amount;
     }
 
-    buffer.writeln('\nTotal Upcoming: \$${totalUpcoming.toStringAsFixed(2)}');
+    buffer.writeln(
+      '\nTotal Upcoming: ${_currencyService.format(totalUpcoming)}',
+    );
 
     return buffer.toString();
   }

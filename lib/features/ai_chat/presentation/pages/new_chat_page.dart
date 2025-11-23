@@ -69,7 +69,8 @@ class _NewChatPageState extends State<NewChatPage> {
     });
 
     final database = ServiceProvider.of(context).database;
-    _financialDataService = FinancialDataService(database);
+    final currencyService = ServiceProvider.of(context).currencyService;
+    _financialDataService = FinancialDataService(database, currencyService);
 
     try {
       print('📊 [NewChatPage] Fetching financial summary from database...');

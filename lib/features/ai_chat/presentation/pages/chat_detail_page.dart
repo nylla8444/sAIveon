@@ -71,7 +71,8 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
     final database = ServiceProvider.of(context).database;
     final chatRepository = ServiceProvider.of(context).chatRepository;
-    _financialDataService = FinancialDataService(database);
+    final currencyService = ServiceProvider.of(context).currencyService;
+    _financialDataService = FinancialDataService(database, currencyService);
 
     try {
       // Load session info

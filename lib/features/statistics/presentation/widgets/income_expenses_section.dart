@@ -23,7 +23,7 @@ class IncomeExpensesSection extends StatelessWidget {
           child: _buildCard(
             label: 'Income',
             percentage: incomePercentage,
-            isIncrease: incomePercentage.startsWith('+'),
+            isIncome: true,
             onTap: onIncomeTap,
           ),
         ),
@@ -35,7 +35,7 @@ class IncomeExpensesSection extends StatelessWidget {
           child: _buildCard(
             label: 'Expenses',
             percentage: expensesPercentage,
-            isIncrease: expensesPercentage.startsWith('+'),
+            isIncome: false,
             onTap: onExpensesTap,
           ),
         ),
@@ -46,7 +46,7 @@ class IncomeExpensesSection extends StatelessWidget {
   Widget _buildCard({
     required String label,
     required String percentage,
-    required bool isIncrease,
+    required bool isIncome,
     VoidCallback? onTap,
   }) {
     return GestureDetector(
@@ -69,13 +69,13 @@ class IncomeExpensesSection extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: isIncrease
+                color: isIncome
                     ? const Color(0xFFBA9BFF)
                     : const Color(0xFFFF8282),
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isIncrease ? Icons.arrow_upward : Icons.arrow_downward,
+                isIncome ? Icons.arrow_upward : Icons.arrow_downward,
                 color: Colors.white,
                 size: 24,
               ),
