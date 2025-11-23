@@ -22,6 +22,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   String _financialContext = 'Loading your financial data in the background...';
   ChatSessionEntity? _session;
   bool _isLoading = true;
+  bool _isDataLoaded = false;
 
   @override
   void initState() {
@@ -40,7 +41,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   Future<void> _loadSessionAndFinancialData() async {
     if (!mounted) return;
 
-    print('\n🔵 === ChatDetailPage: Loading Session ${widget.sessionId} ===');
+    print('💰 [ChatDetail] Starting session load for #${widget.sessionId}...');
+
+    setState(() {
+      _isDataLoaded = false;
+    });
 
     final database = ServiceProvider.of(context).database;
     final chatRepository = ServiceProvider.of(context).chatRepository;
@@ -48,25 +53,25 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
     try {
       // Load session info
-      print('🔵 Loading session info...');
+      print('📋 [ChatDetail] Loading session info...');
       final sessions = await chatRepository.watchAllChatSessions().first;
       final session = sessions.firstWhere((s) => s.id == widget.sessionId);
-      print('✅ Session loaded: "${session.title}"');
+      print('✅ [ChatDetail] Session loaded: "${session.title}"');
 
       // Load financial data
-      print('🔵 Loading financial data...');
+      print('💰 [ChatDetail] Loading financial data...');
       final data = await _financialDataService.getFinancialSummary();
-      print('✅ Financial data loaded');
+      print('✅ [ChatDetail] Financial data loaded (${data.length} characters)');
 
       // Load previous messages
-      print('🔵 Loading previous messages for session ${widget.sessionId}...');
+      print('💬 [ChatDetail] Loading previous messages...');
       final messages = await chatRepository
           .watchMessagesBySession(widget.sessionId)
           .first;
 
-      print('📊 Total messages found: ${messages.length}');
+      final activeMessages = messages.where((m) => !m.isDeleted).length;
       print(
-        '📊 Non-deleted messages: ${messages.where((m) => !m.isDeleted).length}',
+        '📊 [ChatDetail] Found $activeMessages active messages (${messages.length} total)',
       );
 
       if (mounted) {
@@ -74,23 +79,19 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           _session = session;
           _financialContext = data;
           _isLoading = false;
+          _isDataLoaded = true;
         });
 
         // Reinitialize provider with actual data
-        print('🔵 Reinitializing provider...');
+        print('🤖 [ChatDetail] Initializing AI provider...');
         _initializeProvider();
+        print('✅ [ChatDetail] AI provider ready');
 
         // Restore chat history
         final chatMessages = messages.where((m) => !m.isDeleted).map((m) {
           if (m.isUser) {
-            print(
-              '  👤 User: ${m.content.substring(0, m.content.length > 50 ? 50 : m.content.length)}...',
-            );
             return ChatMessage.user(m.content, const []);
           } else {
-            print(
-              '  🤖 AI: ${m.content.substring(0, m.content.length > 50 ? 50 : m.content.length)}...',
-            );
             final llmMsg = ChatMessage.llm();
             llmMsg.append(m.content);
             return llmMsg;
@@ -98,79 +99,51 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
         }).toList();
 
         print(
-          '📝 Restoring ${chatMessages.length} messages to chat history...',
+          '📝 [ChatDetail] Restoring ${chatMessages.length} messages to UI...',
         );
         if (chatMessages.isNotEmpty && _provider != null) {
           _provider!.history = chatMessages;
-          print('✅ Chat history restored successfully!');
+          print('✅ [ChatDetail] Chat history restored');
         } else if (chatMessages.isEmpty) {
-          print('⚠️ No messages to restore - chat is empty');
+          print('ℹ️ [ChatDetail] No messages to restore - new chat');
         }
       }
 
-      print('🟢 === Session Load Complete ===\n');
-    } catch (e) {
-      print('❌ Error loading session: $e');
-      print('Stack trace: ${StackTrace.current}');
+      print('✅ [ChatDetail] Session load complete\n');
+    } catch (e, stackTrace) {
+      print('❌ [ChatDetail] Error loading session: $e');
+      print('📋 [ChatDetail] Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _financialContext = 'Unable to load financial data: $e';
           _isLoading = false;
+          _isDataLoaded = true; // Mark as loaded even on error
         });
       }
     }
   }
 
   void _initializeProvider() {
+    print('🔧 [ChatDetail] Initializing provider...');
     final apiKey = Env.geminiApiKey;
     if (apiKey.isEmpty) {
       throw Exception('GEMINI_API_KEY not found in .env file');
     }
 
-    final systemPrompt =
-        '''You are an expert financial advisor and personal finance assistant. 
-
-You have access to the user's complete financial data including:
-- Bank accounts and balances
-- Transaction history
-- Budget allocations and spending
-- Scheduled payments
-- Financial trends and insights
-
-IMPORTANT GUIDELINES:
-1. Analyze the user's actual financial data to provide personalized advice
-2. Be specific and reference their real numbers when giving recommendations
-3. Alert them to overspending, budget issues, or unusual patterns
-4. Suggest concrete actions based on their spending habits
-5. Help them set realistic financial goals based on their income/expenses
-6. Explain financial concepts clearly and avoid jargon
-7. Be encouraging and supportive, especially about financial challenges
-8. Protect their privacy - never share or expose their data externally
-
-Current Financial Data:
-$_financialContext
-
-Use this data to provide informed, personalized financial guidance.''';
-
-    final model = GenerativeModel(
-      model: 'gemini-2.0-flash-lite',
-      apiKey: apiKey,
-      systemInstruction: Content.system(systemPrompt),
+    _provider = _GeminiLlmProvider(
+      apiKey,
+      () => _financialContext,
+      onMessage: _saveMessage,
     );
-
-    _provider = _GeminiLlmProvider(model, onMessage: _saveMessage);
+    print('✅ [ChatDetail] Provider initialized');
   }
 
   Future<void> _saveMessage(String content, bool isUser) async {
     if (!mounted) return;
 
     print(
-      '💾 Saving ${isUser ? 'USER' : 'AI'} message to session ${widget.sessionId}',
+      '💾 [ChatDetail] Saving ${isUser ? "USER" : "AI"} message (session #${widget.sessionId})',
     );
-    print(
-      '   Content: ${content.substring(0, content.length > 100 ? 100 : content.length)}...',
-    );
-
     final chatRepository = ServiceProvider.of(context).chatRepository;
 
     final message = ChatMessageEntity(
@@ -181,14 +154,14 @@ Use this data to provide informed, personalized financial guidance.''';
     );
 
     await chatRepository.addMessage(message);
-    print('✅ Message saved to database');
+    print('✅ [ChatDetail] Message saved');
 
     // Update session's last message time
     if (_session != null) {
       await chatRepository.updateChatSession(
         _session!.copyWith(lastMessageTime: DateTime.now()),
       );
-      print('✅ Session timestamp updated');
+      print('✅ [ChatDetail] Session timestamp updated');
     }
   }
 
@@ -219,6 +192,51 @@ Use this data to provide informed, personalized financial guidance.''';
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  // Data loading indicator
+                  if (!_isLoading && !_isDataLoaded)
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFBA9BFF),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Loading data...',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 12,
+                            color: Color(0xFFBA9BFF),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (!_isLoading && _isDataLoaded)
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF4CAF50),
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Data loaded',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 12,
+                            color: Color(0xFF4CAF50),
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(
                       Icons.refresh,
@@ -339,12 +357,47 @@ Use this data to provide informed, personalized financial guidance.''';
 
 // Custom Gemini provider implementation for flutter_ai_toolkit
 class _GeminiLlmProvider extends LlmProvider with ChangeNotifier {
-  _GeminiLlmProvider(this._model, {this.onMessage});
+  _GeminiLlmProvider(this._apiKey, this._getFinancialContext, {this.onMessage});
 
-  final GenerativeModel _model;
+  final String _apiKey;
+  final String Function() _getFinancialContext;
   final Future<void> Function(String, bool)? onMessage;
-  late final ChatSession _chat = _model.startChat();
   final List<ChatMessage> _history = [];
+
+  GenerativeModel _buildModel() {
+    final systemPrompt =
+        '''You are an expert financial advisor and personal finance assistant. 
+
+You have access to the user's complete financial data including:
+- Bank accounts and balances
+- Transaction history
+- Budget allocations and spending
+- Scheduled payments
+- Financial trends and insights
+
+IMPORTANT GUIDELINES:
+1. ALWAYS use the EXACT numbers from the financial data provided
+2. NEVER make up or guess financial amounts - only use real data
+3. If you don't see specific data, say "I don't see that information in your records"
+4. Be specific and reference their real numbers when giving recommendations
+5. Alert them to overspending, budget issues, or unusual patterns
+6. Suggest concrete actions based on their spending habits
+7. Help them set realistic financial goals based on their income/expenses
+8. Explain financial concepts clearly and avoid jargon
+9. Be encouraging and supportive, especially about financial challenges
+10. Protect their privacy - never share or expose their data externally
+
+Current Financial Data:
+${_getFinancialContext()}
+
+CRITICAL: Always refer to the financial data above for accurate information. Do not hallucinate or estimate values.''';
+
+    return GenerativeModel(
+      model: 'gemini-2.5-flash',
+      apiKey: _apiKey,
+      systemInstruction: Content.system(systemPrompt),
+    );
+  }
 
   @override
   Iterable<ChatMessage> get history => _history;
@@ -361,8 +414,9 @@ class _GeminiLlmProvider extends LlmProvider with ChangeNotifier {
     String prompt, {
     Iterable<Attachment> attachments = const [],
   }) async* {
+    final model = _buildModel();
     final content = Content.text(prompt);
-    final response = _model.generateContentStream([content]);
+    final response = model.generateContentStream([content]);
 
     await for (final chunk in response) {
       final text = chunk.text;
@@ -386,8 +440,32 @@ class _GeminiLlmProvider extends LlmProvider with ChangeNotifier {
     final llmMessage = ChatMessage.llm();
     _history.addAll([userMessage, llmMessage]);
 
-    final content = Content.text(prompt);
-    final response = _chat.sendMessageStream(content);
+    // Build model with fresh financial data
+    final model = _buildModel();
+
+    // Build full conversation history (max 10 pairs)
+    final conversationHistory = <Content>[];
+    final maxHistory = 10;
+    final startIdx = _history.length > maxHistory * 2
+        ? _history.length - (maxHistory * 2)
+        : 0;
+
+    for (int i = startIdx; i < _history.length - 2; i += 2) {
+      if (i + 1 < _history.length - 2) {
+        final userText = _history[i].text ?? '';
+        final aiText = _history[i + 1].text ?? '';
+        if (userText.isNotEmpty && aiText.isNotEmpty) {
+          conversationHistory.add(Content.text(userText));
+          conversationHistory.add(Content.model([TextPart(aiText)]));
+        }
+      }
+    }
+
+    // Add current prompt
+    conversationHistory.add(Content.text(prompt));
+
+    // Send with fresh system context
+    final response = model.generateContentStream(conversationHistory);
 
     final buffer = StringBuffer();
     await for (final chunk in response) {
