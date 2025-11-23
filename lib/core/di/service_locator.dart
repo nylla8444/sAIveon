@@ -3,6 +3,7 @@ import '../database/app_database.dart';
 import '../network/api_client.dart';
 import '../sync/sync_service.dart';
 import '../services/scheduled_payment_notification_service.dart';
+import '../services/connectivity_service.dart';
 import '../../features/banks/data/repositories/bank_repository_impl.dart';
 import '../../features/banks/domain/repositories/bank_repository.dart';
 import '../../features/banks/domain/entities/bank_entity.dart';
@@ -29,6 +30,7 @@ class ServiceLocator {
   late final AppDatabase _database;
   late final ApiClient _apiClient;
   late final SyncService _syncService;
+  late final ConnectivityService _connectivityService;
   late final ScheduledPaymentNotificationService
   _scheduledPaymentNotificationService;
 
@@ -50,6 +52,10 @@ class ServiceLocator {
     print('  → Initializing database...');
     _database = AppDatabase();
     print('  ✓ Database initialized');
+
+    print('  → Initializing connectivity service...');
+    _connectivityService = ConnectivityService();
+    print('  ✓ Connectivity service initialized');
 
     print('  → Initializing API client...');
     _apiClient = ApiClient();
@@ -116,6 +122,7 @@ class ServiceLocator {
   Future<void> dispose() async {
     _scheduledPaymentNotificationService.dispose();
     _syncService.dispose();
+    _connectivityService.dispose();
     await _database.close();
   }
 
@@ -123,6 +130,7 @@ class ServiceLocator {
   AppDatabase get database => _database;
   ApiClient get apiClient => _apiClient;
   SyncService get syncService => _syncService;
+  ConnectivityService get connectivityService => _connectivityService;
 
   // Getters for repositories
   IBankRepository get bankRepository => _bankRepository;

@@ -21,6 +21,7 @@ class _NewChatPageState extends State<NewChatPage> {
   String _financialContext = 'Loading your financial data in the background...';
   int? _currentSessionId;
   bool _isDataLoaded = false;
+  bool _isOnline = true;
 
   @override
   void initState() {
@@ -31,9 +32,30 @@ class _NewChatPageState extends State<NewChatPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    // Listen to connectivity changes
+    final connectivityService = ServiceProvider.of(context).connectivityService;
+    connectivityService.addListener(_onConnectivityChanged);
+    _isOnline = connectivityService.isOnline;
+
     // Load financial data after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadFinancialData();
+    });
+  }
+
+  @override
+  void dispose() {
+    final connectivityService = ServiceProvider.of(context).connectivityService;
+    connectivityService.removeListener(_onConnectivityChanged);
+    super.dispose();
+  }
+
+  void _onConnectivityChanged() {
+    if (!mounted) return;
+    final connectivityService = ServiceProvider.of(context).connectivityService;
+    setState(() {
+      _isOnline = connectivityService.isOnline;
     });
   }
 
@@ -165,8 +187,27 @@ class _NewChatPageState extends State<NewChatPage> {
                     ),
                   ),
                   const Spacer(),
-                  // Data loading indicator
-                  if (!_isDataLoaded)
+                  // Data loading indicator and offline status
+                  if (!_isOnline)
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.cloud_off,
+                          color: Color(0xFFFF6B6B),
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Offline',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 12,
+                            color: Color(0xFFFF6B6B),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (!_isDataLoaded)
                     Row(
                       children: [
                         SizedBox(
@@ -224,7 +265,42 @@ class _NewChatPageState extends State<NewChatPage> {
             ),
             const SizedBox(height: 20),
             // AI Chat View
-            if (_provider == null)
+            if (!_isOnline)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.cloud_off,
+                        size: 64,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'No Internet Connection',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'AI chat requires an internet connection.\nPlease check your connection and try again.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_provider == null)
               const Expanded(
                 child: Center(
                   child: Column(
