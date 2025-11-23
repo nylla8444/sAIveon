@@ -23,6 +23,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   ChatSessionEntity? _session;
   bool _isLoading = true;
   bool _isDataLoaded = false;
+  bool _isOnline = true;
 
   @override
   void initState() {
@@ -33,8 +34,29 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    // Listen to connectivity changes
+    final connectivityService = ServiceProvider.of(context).connectivityService;
+    connectivityService.addListener(_onConnectivityChanged);
+    _isOnline = connectivityService.isOnline;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSessionAndFinancialData();
+    });
+  }
+
+  @override
+  void dispose() {
+    final connectivityService = ServiceProvider.of(context).connectivityService;
+    connectivityService.removeListener(_onConnectivityChanged);
+    super.dispose();
+  }
+
+  void _onConnectivityChanged() {
+    if (!mounted) return;
+    final connectivityService = ServiceProvider.of(context).connectivityService;
+    setState(() {
+      _isOnline = connectivityService.isOnline;
     });
   }
 
@@ -192,8 +214,27 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // Data loading indicator
-                  if (!_isLoading && !_isDataLoaded)
+                  // Data loading indicator and offline status
+                  if (!_isOnline)
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.cloud_off,
+                          color: Color(0xFFFF6B6B),
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Offline',
+                          style: TextStyle(
+                            fontFamily: 'Manrope',
+                            fontSize: 12,
+                            color: Color(0xFFFF6B6B),
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (!_isLoading && !_isDataLoaded)
                     Row(
                       children: [
                         SizedBox(
@@ -250,7 +291,42 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
             ),
             const SizedBox(height: 20),
             // AI Chat View
-            if (_isLoading)
+            if (!_isOnline)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.cloud_off,
+                        size: 64,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'No Internet Connection',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'AI chat requires an internet connection.\nPlease check your connection and try again.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_isLoading)
               const Expanded(
                 child: Center(
                   child: CircularProgressIndicator(color: Color(0xFFBA9BFF)),

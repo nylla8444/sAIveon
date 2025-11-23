@@ -16,151 +16,179 @@ class AIPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chatRepository = ServiceProvider.of(context).chatRepository;
+    final connectivityService = ServiceProvider.of(context).connectivityService;
 
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Section
-                const SizedBox(height: 20),
-                Row(
+        child: ListenableBuilder(
+          listenable: connectivityService,
+          builder: (context, _) {
+            final isOnline = connectivityService.isOnline;
+
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: HeaderSection(
-                        userName: 'Allyn Ralf Ledesma',
-                        hasNotification: true,
-                        onProfileTap: () {
-                          // TODO: Navigate to profile page
-                        },
-                        onNotificationTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const NotificationsPage(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    // Chat History Icon Button
-                    IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ChatHistoryPage(),
+                    // Header Section
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: HeaderSection(
+                            userName: 'Allyn Ralf Ledesma',
+                            hasNotification: true,
+                            onProfileTap: () {
+                              // TODO: Navigate to profile page
+                            },
+                            onNotificationTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NotificationsPage(),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.history,
-                        color: Color(0xFFBA9BFF),
-                        size: 28,
-                      ),
-                      tooltip: 'Chat History',
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // AI Welcome Section - centered
-                const Center(child: AIWelcomeSection()),
-
-                const SizedBox(height: 30),
-
-                // New Chat Button - centered
-                Center(
-                  child: NewChatButton(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NewChatPage(),
                         ),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // Previous Chats Section - centered with real data
-                Center(
-                  child: StreamBuilder<List<ChatSessionEntity>>(
-                    stream: chatRepository.watchAllChatSessions(),
-                    builder: (context, snapshot) {
-                      final sessions = snapshot.data ?? [];
-                      final activeSessions =
-                          sessions.where((s) => !s.isDeleted).toList()..sort(
-                            (a, b) =>
-                                b.lastMessageTime.compareTo(a.lastMessageTime),
-                          );
-
-                      final recentChats = activeSessions.take(3).map((session) {
-                        return ChatData(
-                          message: session.title,
-                          onTap: () {
+                        // Chat History Icon Button
+                        IconButton(
+                          onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    ChatDetailPage(sessionId: session.id!),
+                                builder: (context) => const ChatHistoryPage(),
                               ),
                             );
                           },
-                        );
-                      }).toList();
+                          icon: const Icon(
+                            Icons.history,
+                            color: Color(0xFFBA9BFF),
+                            size: 28,
+                          ),
+                          tooltip: 'Chat History',
+                        ),
+                      ],
+                    ),
 
-                      return Column(
-                        children: [
-                          if (recentChats.isNotEmpty)
-                            PreviousChatsSection(chats: recentChats),
-                          if (activeSessions.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            TextButton.icon(
-                              onPressed: () {
+                    const SizedBox(height: 20),
+
+                    // AI Welcome Section - centered
+                    const Center(child: AIWelcomeSection()),
+
+                    const SizedBox(height: 30),
+
+                    // New Chat Button - centered
+                    Center(
+                      child: Opacity(
+                        opacity: isOnline ? 1.0 : 0.5,
+                        child: NewChatButton(
+                          onTap: isOnline
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const NewChatPage(),
+                                    ),
+                                  );
+                                }
+                              : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'AI chat requires an internet connection',
+                                      ),
+                                      backgroundColor: Color(0xFFFF6B6B),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Previous Chats Section - centered with real data
+                    Center(
+                      child: StreamBuilder<List<ChatSessionEntity>>(
+                        stream: chatRepository.watchAllChatSessions(),
+                        builder: (context, snapshot) {
+                          final sessions = snapshot.data ?? [];
+                          final activeSessions =
+                              sessions.where((s) => !s.isDeleted).toList()
+                                ..sort(
+                                  (a, b) => b.lastMessageTime.compareTo(
+                                    a.lastMessageTime,
+                                  ),
+                                );
+
+                          final recentChats = activeSessions.take(3).map((
+                            session,
+                          ) {
+                            return ChatData(
+                              message: session.title,
+                              onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const ChatHistoryPage(),
+                                        ChatDetailPage(sessionId: session.id!),
                                   ),
                                 );
                               },
-                              icon: const Icon(
-                                Icons.history,
-                                size: 16,
-                                color: Color(0xFFBA9BFF),
-                              ),
-                              label: Text(
-                                activeSessions.length > 3
-                                    ? 'View All ${activeSessions.length} Chats'
-                                    : 'View Chat History',
-                                style: const TextStyle(
-                                  fontFamily: 'Manrope',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFFBA9BFF),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      );
-                    },
-                  ),
-                ),
+                            );
+                          }).toList();
 
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
+                          return Column(
+                            children: [
+                              if (recentChats.isNotEmpty)
+                                PreviousChatsSection(chats: recentChats),
+                              if (activeSessions.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ChatHistoryPage(),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons.history,
+                                    size: 16,
+                                    color: Color(0xFFBA9BFF),
+                                  ),
+                                  label: Text(
+                                    activeSessions.length > 3
+                                        ? 'View All ${activeSessions.length} Chats'
+                                        : 'View Chat History',
+                                    style: const TextStyle(
+                                      fontFamily: 'Manrope',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFFBA9BFF),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
