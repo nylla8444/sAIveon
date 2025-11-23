@@ -201,7 +201,9 @@ class _ExpensesSeeAllPageState extends State<ExpensesSeeAllPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    '\$${totalSpent.toStringAsFixed(0)}',
+                                    ServiceProvider.of(
+                                      context,
+                                    ).currencyService.formatWhole(totalSpent),
                                     style: const TextStyle(
                                       color: Color(0xFFE6E6E6),
                                       fontSize: 20,
@@ -287,7 +289,9 @@ class _ExpensesSeeAllPageState extends State<ExpensesSeeAllPage> {
                               padding: const EdgeInsets.only(bottom: 9),
                               child: _buildExpenseCard(
                                 title: category,
-                                amount: '\$${amount.toStringAsFixed(0)}',
+                                amount: ServiceProvider.of(
+                                  context,
+                                ).currencyService.formatWhole(amount),
                                 percentChange:
                                     '${percentageChange.toStringAsFixed(0)}%',
                                 isIncrease: isIncrease,

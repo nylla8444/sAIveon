@@ -27,14 +27,17 @@ class ExpensesHorizontalScrollSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final transactionRepository = ServiceProvider.of(
-      context,
-    ).transactionRepository;
+    final serviceProvider = ServiceProvider.of(context);
+    final transactionRepository = serviceProvider.transactionRepository;
+    final currencyService = serviceProvider.currencyService;
 
     return StreamBuilder(
       stream: transactionRepository.watchAllTransactions(),
       builder: (context, snapshot) {
-        final expenses = _calculateExpenseData(snapshot.data ?? []);
+        final expenses = _calculateExpenseData(
+          snapshot.data ?? [],
+          currencyService,
+        );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +122,10 @@ class ExpensesHorizontalScrollSection extends StatelessWidget {
     );
   }
 
-  List<ExpenseData> _calculateExpenseData(List<dynamic> transactions) {
+  List<ExpenseData> _calculateExpenseData(
+    List<dynamic> transactions,
+    currencyService,
+  ) {
     final now = DateTime.now();
     final currentMonth = DateTime(now.year, now.month);
     final previousMonth = DateTime(now.year, now.month - 1);
@@ -191,7 +197,7 @@ class ExpensesHorizontalScrollSection extends StatelessWidget {
       expenseList.add(
         ExpenseData(
           category: category,
-          amount: '\$${currentAmount.toStringAsFixed(0)}',
+          amount: currencyService.formatWhole(currentAmount),
           percentage: '${percentageChange.toStringAsFixed(0)}%',
           isIncrease: isIncrease,
           icon: _getCategoryIcon(category),
@@ -201,12 +207,8 @@ class ExpensesHorizontalScrollSection extends StatelessWidget {
 
     // Sort by amount (descending)
     expenseList.sort((a, b) {
-      final aAmount = double.parse(
-        a.amount.replaceAll('\$', '').replaceAll(',', ''),
-      );
-      final bAmount = double.parse(
-        b.amount.replaceAll('\$', '').replaceAll(',', ''),
-      );
+      final aAmount = double.parse(a.amount.replaceAll(RegExp(r'[^\d.]'), ''));
+      final bAmount = double.parse(b.amount.replaceAll(RegExp(r'[^\d.]'), ''));
       return bAmount.compareTo(aAmount);
     });
 

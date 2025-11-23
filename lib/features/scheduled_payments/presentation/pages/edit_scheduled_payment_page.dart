@@ -460,11 +460,13 @@ class _EditScheduledPaymentPageState extends State<EditScheduledPaymentPage> {
                   ),
                   child: Row(
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(left: 15),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 15),
                         child: Text(
-                          '\$',
-                          style: TextStyle(
+                          ServiceProvider.of(
+                            context,
+                          ).currencyService.currencySymbol,
+                          style: const TextStyle(
                             color: Color(0xFFD6D6D6),
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

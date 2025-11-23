@@ -21,9 +21,9 @@ class ExpenseDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final transactionRepository = ServiceProvider.of(
-      context,
-    ).transactionRepository;
+    final serviceProvider = ServiceProvider.of(context);
+    final transactionRepository = serviceProvider.transactionRepository;
+    final currencyService = serviceProvider.currencyService;
 
     return StreamBuilder(
       stream: transactionRepository.watchAllTransactions(),
@@ -32,6 +32,7 @@ class ExpenseDetailPage extends StatelessWidget {
         final categoryTransactions = _filterCategoryTransactions(transactions);
         final groupedTransactions = _groupTransactionsByDate(
           categoryTransactions,
+          currencyService,
         );
         final chartData = _calculateMonthlyData(transactions);
 
@@ -107,7 +108,7 @@ class ExpenseDetailPage extends StatelessWidget {
                   const SizedBox(height: 19),
 
                   // Spending chart card
-                  _buildSpendingChart(chartData),
+                  _buildSpendingChart(chartData, currencyService),
 
                   const SizedBox(height: 19),
 
@@ -164,6 +165,7 @@ class ExpenseDetailPage extends StatelessWidget {
 
   Map<String, List<_TransactionData>> _groupTransactionsByDate(
     List<dynamic> transactions,
+    currencyService,
   ) {
     final Map<String, List<_TransactionData>> grouped = {};
 
@@ -179,7 +181,7 @@ class ExpenseDetailPage extends StatelessWidget {
           category: tx.name,
           description: tx.status,
           time: DateFormat('hh:mma').format(tx.date),
-          amount: '-\$${tx.amount.toStringAsFixed(0)}',
+          amount: '-${currencyService.formatWhole(tx.amount)}',
           icon: icon,
         ),
       );
@@ -223,7 +225,7 @@ class ExpenseDetailPage extends StatelessWidget {
     return monthlyData;
   }
 
-  Widget _buildSpendingChart(Map<int, double> chartData) {
+  Widget _buildSpendingChart(Map<int, double> chartData, currencyService) {
     final now = DateTime.now();
     final totalSpent = chartData.values.fold(0.0, (sum, val) => sum + val);
 
@@ -262,7 +264,7 @@ class ExpenseDetailPage extends StatelessWidget {
               ),
               children: [
                 const TextSpan(text: 'You spent '),
-                TextSpan(text: '\$${totalSpent.toStringAsFixed(0)}'),
+                TextSpan(text: currencyService.formatWhole(totalSpent)),
                 const TextSpan(text: ' on '),
                 TextSpan(
                   text: category,
@@ -287,21 +289,21 @@ class ExpenseDetailPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       _buildYAxisLabel(
-                        '\$${(chartMax * 1.0).toStringAsFixed(0)}',
+                        currencyService.formatWhole(chartMax * 1.0),
                       ),
                       _buildYAxisLabel(
-                        '\$${(chartMax * 0.8).toStringAsFixed(0)}',
+                        currencyService.formatWhole(chartMax * 0.8),
                       ),
                       _buildYAxisLabel(
-                        '\$${(chartMax * 0.6).toStringAsFixed(0)}',
+                        currencyService.formatWhole(chartMax * 0.6),
                       ),
                       _buildYAxisLabel(
-                        '\$${(chartMax * 0.4).toStringAsFixed(0)}',
+                        currencyService.formatWhole(chartMax * 0.4),
                       ),
                       _buildYAxisLabel(
-                        '\$${(chartMax * 0.2).toStringAsFixed(0)}',
+                        currencyService.formatWhole(chartMax * 0.2),
                       ),
-                      _buildYAxisLabel('\$0'),
+                      _buildYAxisLabel('${currencyService.currencySymbol}0'),
                     ],
                   ),
                 ),

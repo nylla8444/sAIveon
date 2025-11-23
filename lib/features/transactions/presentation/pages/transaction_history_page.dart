@@ -42,45 +42,52 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF050505),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    final currencyService = ServiceProvider.of(context).currencyService;
+
+    return ListenableBuilder(
+      listenable: currencyService,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: const Color(0xFF050505),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CustomBackButton(
-                    size: 40,
-                    backgroundColor: const Color(0xFF2A2A2A),
-                    iconColor: const Color(0xFFFFFFFF),
+                  Row(
+                    children: [
+                      CustomBackButton(
+                        size: 40,
+                        backgroundColor: const Color(0xFF2A2A2A),
+                        iconColor: const Color(0xFFFFFFFF),
+                      ),
+                      const SizedBox(width: 15),
+                      const Text(
+                        'Transaction History',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Color(0xFFFFFFFF),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 15),
-                  const Text(
-                    'Transaction History',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Color(0xFFFFFFFF),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  const SizedBox(height: 20),
+                  _buildSearchBar(),
+                  const SizedBox(height: 18),
+                  _buildFilterTabs(),
+                  const SizedBox(height: 19),
+                  _buildBankDateFilters(),
+                  const SizedBox(height: 12),
+                  Expanded(child: _buildFilteredTransactionList()),
                 ],
               ),
-              const SizedBox(height: 20),
-              _buildSearchBar(),
-              const SizedBox(height: 18),
-              _buildFilterTabs(),
-              const SizedBox(height: 19),
-              _buildBankDateFilters(),
-              const SizedBox(height: 12),
-              Expanded(child: _buildFilteredTransactionList()),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -173,6 +180,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
   Widget _buildFilteredTransactionList() {
     final locator = ServiceProvider.of(context);
+    final currencyService = locator.currencyService;
     return StreamBuilder<List<TransactionEntity>>(
       stream: locator.transactionRepository.watchAllTransactions(),
       builder: (context, snapshot) {
@@ -273,7 +281,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 final data = txs.map((t) {
                   final isPositive = t.type == 'receive';
                   final sign = isPositive ? '+' : '-';
-                  final amountStr = '$sign\$${t.amount.toStringAsFixed(0)}';
+                  final amountStr =
+                      '$sign${currencyService.formatWhole(t.amount)}';
 
                   String description;
                   if (t.type == 'transfer' &&

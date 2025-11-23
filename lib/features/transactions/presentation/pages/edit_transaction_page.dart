@@ -551,7 +551,9 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                             ),
                           ),
                           subtitle: Text(
-                            '\$${bank.balance.toStringAsFixed(2)}',
+                            ServiceProvider.of(
+                              context,
+                            ).currencyService.format(bank.balance),
                             style: const TextStyle(
                               fontFamily: 'Manrope',
                               color: Color(0xFF9E9E9E),

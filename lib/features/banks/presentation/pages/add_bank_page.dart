@@ -212,18 +212,20 @@ class _AddBankPageState extends State<AddBankPage> {
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
-            decoration: const InputDecoration(
-              hintText: '\$0',
-              hintStyle: TextStyle(
+            decoration: InputDecoration(
+              hintText:
+                  '${ServiceProvider.of(context).currencyService.currencySymbol}0',
+              hintStyle: const TextStyle(
                 fontFamily: 'Manrope',
                 color: Color(0xFF666666),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14),
-              prefixText: '\$ ',
-              prefixStyle: TextStyle(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              prefixText:
+                  '${ServiceProvider.of(context).currencyService.currencySymbol} ',
+              prefixStyle: const TextStyle(
                 fontFamily: 'Manrope',
                 color: Color(0xFFD6D6D6),
                 fontSize: 14,

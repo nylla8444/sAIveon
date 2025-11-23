@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/index.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
+import 'settings_page.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -85,8 +86,12 @@ class MorePage extends StatelessWidget {
                           subtitle: 'Account settings,\nalerts & notifications',
                           icon: Icons.settings_outlined,
                           onTap: () {
-                            // TODO: Navigate to Settings
-                            print('Settings tapped');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SettingsPage(),
+                              ),
+                            );
                           },
                         ),
                       ),

@@ -24,6 +24,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
+    final currencyService = ServiceProvider.of(context).currencyService;
 
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
@@ -95,7 +96,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Spend: \$${spending.toStringAsFixed(0)} / \$${limit.toStringAsFixed(0)}',
+                            'Spend: ${currencyService.formatWhole(spending)} / ${currencyService.formatWhole(limit)}',
                             style: const TextStyle(
                               fontFamily: 'Poppins',
                               color: Color(0xFF949494),
@@ -236,6 +237,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
 
   void _showEditBudgetDialog(BuildContext context, BudgetEntity currentBudget) {
     final locator = ServiceProvider.of(context);
+    final currencySymbol = locator.currencyService.currencySymbol;
     final controller = TextEditingController(
       text: currentBudget.budgetAmount.toStringAsFixed(0),
     );
@@ -252,15 +254,15 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
           controller: controller,
           keyboardType: TextInputType.number,
           style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Budget Limit',
-            labelStyle: TextStyle(color: Color(0xFF949494)),
-            prefixText: '\$',
-            prefixStyle: TextStyle(color: Colors.white),
-            enabledBorder: UnderlineInputBorder(
+            labelStyle: const TextStyle(color: Color(0xFF949494)),
+            prefixText: currencySymbol,
+            prefixStyle: const TextStyle(color: Colors.white),
+            enabledBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: Color(0xFFA882FF)),
             ),
-            focusedBorder: UnderlineInputBorder(
+            focusedBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: Color(0xFFA882FF)),
             ),
           ),
@@ -299,6 +301,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
 
   Widget _buildMonthlyBudgetChart() {
     final locator = ServiceProvider.of(context);
+    final currencyService = locator.currencyService;
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
@@ -386,12 +389,22 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              _buildYAxisLabel('\$2,500'),
-                              _buildYAxisLabel('\$2,000'),
-                              _buildYAxisLabel('\$1,500'),
-                              _buildYAxisLabel('\$1,000'),
-                              _buildYAxisLabel('\$500'),
-                              _buildYAxisLabel('\$0'),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(2500),
+                              ),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(2000),
+                              ),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(1500),
+                              ),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(1000),
+                              ),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(500),
+                              ),
+                              _buildYAxisLabel(currencyService.formatWhole(0)),
                               const SizedBox(
                                 height: 23,
                               ), // Space for labels below
@@ -499,6 +512,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
 
   Widget _buildLast6PeriodsChart() {
     final locator = ServiceProvider.of(context);
+    final currencyService = locator.currencyService;
     final now = DateTime.now();
     final currentMonth = now.month;
     final currentYear = now.year;
@@ -578,7 +592,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
               barData.add({
                 'height': height,
                 'color': barColor,
-                'value': '\$${spending.toStringAsFixed(0)}',
+                'value': currencyService.formatWhole(spending),
               });
             }
 
@@ -620,12 +634,22 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              _buildYAxisLabel('\$2,500'),
-                              _buildYAxisLabel('\$2,000'),
-                              _buildYAxisLabel('\$1,500'),
-                              _buildYAxisLabel('\$1,000'),
-                              _buildYAxisLabel('\$500'),
-                              _buildYAxisLabel('\$0'),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(2500),
+                              ),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(2000),
+                              ),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(1500),
+                              ),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(1000),
+                              ),
+                              _buildYAxisLabel(
+                                currencyService.formatWhole(500),
+                              ),
+                              _buildYAxisLabel(currencyService.formatWhole(0)),
                             ],
                           ),
                         ),
@@ -707,6 +731,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
 
   Widget _buildExpensesChart() {
     final locator = ServiceProvider.of(context);
+    final currencyService = locator.currencyService;
     final now = DateTime.now();
     final startDate = DateTime(now.year, now.month, 1);
     final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
@@ -817,7 +842,7 @@ class _MonthlyBudgetPageState extends State<MonthlyBudgetPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '\$${total.toStringAsFixed(0)}',
+                              currencyService.formatWhole(total),
                               style: const TextStyle(
                                 fontFamily: 'Manrope',
                                 color: Color(0xFFE6E6E6),
@@ -1017,6 +1042,7 @@ class _InteractiveLineChartState extends State<_InteractiveLineChart> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyService = ServiceProvider.of(context).currencyService;
     return LayoutBuilder(
       builder: (context, constraints) {
         return GestureDetector(
@@ -1074,7 +1100,9 @@ class _InteractiveLineChartState extends State<_InteractiveLineChart> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '\$${(widget.incomeData[_selectedIndex!] * 2500).toStringAsFixed(0)}',
+                              currencyService.formatWhole(
+                                widget.incomeData[_selectedIndex!] * 2500,
+                              ),
                               style: const TextStyle(
                                 fontFamily: 'Poppins',
                                 color: Color(0xFFBA9BFF),
@@ -1098,7 +1126,9 @@ class _InteractiveLineChartState extends State<_InteractiveLineChart> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '\$${(widget.spendingData[_selectedIndex!] * 2500).toStringAsFixed(0)}',
+                              currencyService.formatWhole(
+                                widget.spendingData[_selectedIndex!] * 2500,
+                              ),
                               style: const TextStyle(
                                 fontFamily: 'Poppins',
                                 color: Color(0xFFFF8282),

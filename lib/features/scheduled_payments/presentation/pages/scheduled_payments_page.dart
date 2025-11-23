@@ -29,7 +29,9 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
       return Icons.directions_car;
     } else if (nameLower.contains('internet') || nameLower.contains('wifi')) {
       return Icons.wifi;
-    } else if (nameLower.contains('home') || nameLower.contains('rent') || nameLower.contains('house')) {
+    } else if (nameLower.contains('home') ||
+        nameLower.contains('rent') ||
+        nameLower.contains('house')) {
       return Icons.home;
     } else if (nameLower.contains('phone') || nameLower.contains('mobile')) {
       return Icons.phone;
@@ -37,7 +39,8 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
       return Icons.electric_bolt;
     } else if (nameLower.contains('water')) {
       return Icons.water_drop;
-    } else if (nameLower.contains('insurance') || nameLower.contains('health')) {
+    } else if (nameLower.contains('insurance') ||
+        nameLower.contains('health')) {
       return Icons.health_and_safety;
     } else {
       return Icons.payment;
@@ -46,8 +49,10 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
 
   String _getStatusText(DateTime dueDate) {
     final now = DateTime.now();
-    final difference = dueDate.difference(DateTime(now.year, now.month, now.day)).inDays;
-    
+    final difference = dueDate
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
+
     if (difference < 0) {
       return 'Overdue';
     } else if (difference == 0) {
@@ -64,7 +69,9 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
     return dueDate.isBefore(DateTime(now.year, now.month, now.day));
   }
 
-  List<ScheduledPaymentEntity> _filterPayments(List<ScheduledPaymentEntity> payments) {
+  List<ScheduledPaymentEntity> _filterPayments(
+    List<ScheduledPaymentEntity> payments,
+  ) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -83,7 +90,9 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final scheduledPaymentRepository = ServiceProvider.of(context).scheduledPaymentRepository;
+    final scheduledPaymentRepository = ServiceProvider.of(
+      context,
+    ).scheduledPaymentRepository;
 
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
@@ -195,11 +204,12 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
                   }
 
                   final allPayments = snapshot.data ?? [];
-                  final activePayments = allPayments
-                      .where((p) => !p.isDeleted)
-                      .toList()
-                    ..sort((a, b) => a.nextPaymentDate.compareTo(b.nextPaymentDate));
-                  
+                  final activePayments =
+                      allPayments.where((p) => !p.isDeleted).toList()..sort(
+                        (a, b) =>
+                            a.nextPaymentDate.compareTo(b.nextPaymentDate),
+                      );
+
                   final filteredPayments = _filterPayments(activePayments);
 
                   return SingleChildScrollView(
@@ -223,15 +233,25 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
                           )
                         else
                           ...filteredPayments.map((payment) {
+                            final currencyService = ServiceProvider.of(
+                              context,
+                            ).currencyService;
                             return Column(
                               children: [
                                 _buildPaymentCard(
                                   paymentId: payment.id!,
                                   title: payment.name,
-                                  amount: '-\$${payment.amount.toStringAsFixed(0)}',
-                                  status: _getStatusText(payment.nextPaymentDate),
-                                  date: DateFormat('d MMM').format(payment.nextPaymentDate),
-                                  isOverdue: _isOverdue(payment.nextPaymentDate),
+                                  amount:
+                                      '-${currencyService.formatWhole(payment.amount)}',
+                                  status: _getStatusText(
+                                    payment.nextPaymentDate,
+                                  ),
+                                  date: DateFormat(
+                                    'd MMM',
+                                  ).format(payment.nextPaymentDate),
+                                  isOverdue: _isOverdue(
+                                    payment.nextPaymentDate,
+                                  ),
                                   icon: _getIconFromName(payment.name),
                                 ),
                                 const SizedBox(height: 9),
@@ -300,9 +320,8 @@ class _ScheduledPaymentsPageState extends State<ScheduledPaymentsPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ScheduledPaymentDetailPage(
-              paymentId: paymentId,
-            ),
+            builder: (context) =>
+                ScheduledPaymentDetailPage(paymentId: paymentId),
           ),
         );
       },

@@ -508,7 +508,8 @@ class _BankDetailPageState extends State<BankDetailPage> {
       description = transaction.name;
     }
 
-    final amountStr = '\$${transaction.amount.toStringAsFixed(2)}';
+    final currencyService = ServiceProvider.of(context).currencyService;
+    final amountStr = currencyService.format(transaction.amount);
     final sign = isPositive ? '+' : '-';
 
     return Row(

@@ -3,6 +3,10 @@ import 'package:intl/intl.dart';
 import '../../../../core/database/app_database.dart';
 
 /// Service to gather and format financial data for AI analysis
+///
+/// Note: This service uses hardcoded $ symbols in the data sent to AI.
+/// This is intentional as the AI model expects consistent currency formatting.
+/// User-facing UI components use the CurrencyService for dynamic currency display.
 class FinancialDataService {
   final AppDatabase _database;
 

@@ -290,8 +290,11 @@ class _SpendingLineChartSectionState extends State<SpendingLineChartSection> {
                       reservedSize: 42,
                       interval: 500,
                       getTitlesWidget: (value, meta) {
+                        final currencyService = ServiceProvider.of(
+                          context,
+                        ).currencyService;
                         return Text(
-                          '\$${value.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                          currencyService.formatWhole(value),
                           style: const TextStyle(
                             color: Color(0xFF949494),
                             fontSize: 10,
@@ -441,14 +444,21 @@ class _SpendingLineChartSectionState extends State<SpendingLineChartSection> {
                       for (int i = 5; i >= 0; i--)
                         Padding(
                           padding: const EdgeInsets.only(right: 6),
-                          child: Text(
-                            '\$${(i * 500).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                            style: const TextStyle(
-                              color: Color(0xFF949494),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Poppins',
-                            ),
+                          child: Builder(
+                            builder: (context) {
+                              final currencyService = ServiceProvider.of(
+                                context,
+                              ).currencyService;
+                              return Text(
+                                currencyService.formatWhole(i * 500.0),
+                                style: const TextStyle(
+                                  color: Color(0xFF949494),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Poppins',
+                                ),
+                              );
+                            },
                           ),
                         ),
                       const SizedBox(

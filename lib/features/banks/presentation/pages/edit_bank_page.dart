@@ -30,7 +30,7 @@ class _EditBankPageState extends State<EditBankPage> {
     super.initState();
     _nameController = TextEditingController(text: widget.bankName);
     _balanceController = TextEditingController(
-      text: widget.balance.replaceAll('\$', ''),
+      text: widget.balance.replaceAll(RegExp(r'[^\d.]'), ''),
     );
 
     // Load latest entity if id is provided
@@ -303,7 +303,8 @@ class _EditBankPageState extends State<EditBankPage> {
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
-              hintText: '\$0',
+              hintText:
+                  '${ServiceProvider.of(context).currencyService.currencySymbol}0',
               hintStyle: const TextStyle(
                 fontFamily: 'Manrope',
                 color: Color(0xFF666666),
@@ -315,7 +316,8 @@ class _EditBankPageState extends State<EditBankPage> {
                 horizontal: 14,
                 vertical: 14,
               ),
-              prefixText: '\$ ',
+              prefixText:
+                  '${ServiceProvider.of(context).currencyService.currencySymbol} ',
               prefixStyle: const TextStyle(
                 fontFamily: 'Manrope',
                 color: Color(0xFFD6D6D6),

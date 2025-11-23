@@ -93,6 +93,8 @@ class ScheduledPaymentNotificationService {
   /// Create a notification reminder for a scheduled payment
   Future<void> _createPaymentReminder(ScheduledPaymentEntity payment) async {
     try {
+      // Note: Notifications use hardcoded $ as they are generated server-side
+      // In a real app, this would need access to user's currency preference
       final notification = NotificationEntity(
         title: 'Payment Reminder',
         message:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/scheduled_payment_entity.dart';
+import '../../../../core/di/service_locator.dart';
 
 class ScheduledPaymentData {
   final String title;
@@ -82,11 +83,12 @@ class ScheduledPaymentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currencyService = ServiceProvider.of(context).currencyService;
     // Convert entities to display data
     final displayPayments = payments.map((payment) {
       return ScheduledPaymentData(
         title: payment.name,
-        amount: '-\$${payment.amount.toStringAsFixed(0)}',
+        amount: '-${currencyService.formatWhole(payment.amount)}',
         status: _getStatusText(payment.nextPaymentDate),
         date: DateFormat('d MMM').format(payment.nextPaymentDate),
         isOverdue: _isOverdue(payment.nextPaymentDate),

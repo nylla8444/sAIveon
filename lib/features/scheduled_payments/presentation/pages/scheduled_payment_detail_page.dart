@@ -276,7 +276,9 @@ class _ScheduledPaymentDetailPageState
                     ),
                   ),
                   subtitle: Text(
-                    '\$${bank.balance.toStringAsFixed(2)}',
+                    ServiceProvider.of(
+                      context,
+                    ).currencyService.format(bank.balance),
                     style: const TextStyle(
                       color: Color(0xFF949494),
                       fontFamily: 'Poppins',
@@ -403,8 +405,9 @@ class _ScheduledPaymentDetailPageState
       );
     }
 
+    final currencyService = ServiceProvider.of(context).currencyService;
     final title = _payment!.name;
-    final amount = '-\$${_payment!.amount.toStringAsFixed(0)}';
+    final amount = '-${currencyService.formatWhole(_payment!.amount)}';
     final status = _getStatusText(_payment!.nextPaymentDate);
     final date = DateFormat('d MMM').format(_payment!.nextPaymentDate);
     final icon = _getIconFromName(_payment!.name);
@@ -639,11 +642,15 @@ class _ScheduledPaymentDetailPageState
                 )
               else
                 ..._linkedTransactions.map((transaction) {
+                  final currencyService = ServiceProvider.of(
+                    context,
+                  ).currencyService;
                   final date = DateFormat(
                     'dd MMMM yyyy',
                   ).format(transaction.date);
                   final time = DateFormat('hh:mma').format(transaction.date);
-                  final amount = '-\$${transaction.amount.toStringAsFixed(0)}';
+                  final amount =
+                      '-${currencyService.formatWhole(transaction.amount)}';
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),

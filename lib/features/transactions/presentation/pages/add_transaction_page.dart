@@ -242,7 +242,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
         children: [
-          const Icon(Icons.attach_money, color: Color(0xFFD6D6D6), size: 24),
+          const Icon(Icons.paid, color: Color(0xFFD6D6D6), size: 24),
           const SizedBox(width: 14),
           Expanded(
             child: TextField(

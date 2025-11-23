@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/di/service_locator.dart';
 
 class PeriodBarData {
   final double within; // Purple section
@@ -19,6 +20,7 @@ class Last6PeriodsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currencyService = ServiceProvider.of(context).currencyService;
     final months = data.keys.toList();
     final isLastMonth = (String month) => month == months.last;
 
@@ -61,12 +63,12 @@ class Last6PeriodsSection extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildYAxisLabel('\$2,500'),
-                    _buildYAxisLabel('\$2,000'),
-                    _buildYAxisLabel('\$1,500'),
-                    _buildYAxisLabel('\$1,000'),
-                    _buildYAxisLabel('\$500'),
-                    _buildYAxisLabel('\$0'),
+                    _buildYAxisLabel(currencyService.formatWhole(2500)),
+                    _buildYAxisLabel(currencyService.formatWhole(2000)),
+                    _buildYAxisLabel(currencyService.formatWhole(1500)),
+                    _buildYAxisLabel(currencyService.formatWhole(1000)),
+                    _buildYAxisLabel(currencyService.formatWhole(500)),
+                    _buildYAxisLabel(currencyService.formatWhole(0)),
                   ],
                 ),
 

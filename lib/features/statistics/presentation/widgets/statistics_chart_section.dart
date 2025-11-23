@@ -350,8 +350,11 @@ class _StatisticsChartSectionState extends State<StatisticsChartSection> {
               interval: 500,
               reservedSize: 42,
               getTitlesWidget: (value, meta) {
+                final currencyService = ServiceProvider.of(
+                  context,
+                ).currencyService;
                 return Text(
-                  '\$${value.toInt()}',
+                  currencyService.formatWhole(value),
                   style: const TextStyle(
                     color: Color(0xFF949494),
                     fontSize: 10,
@@ -469,8 +472,11 @@ class _StatisticsChartSectionState extends State<StatisticsChartSection> {
                   interval: 500,
                   reservedSize: 42,
                   getTitlesWidget: (value, meta) {
+                    final currencyService = ServiceProvider.of(
+                      context,
+                    ).currencyService;
                     return Text(
-                      '\$${value.toInt()}',
+                      currencyService.formatWhole(value),
                       style: const TextStyle(
                         color: Color(0xFF949494),
                         fontSize: 10,

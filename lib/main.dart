@@ -123,12 +123,6 @@ class FinanceHomePage extends StatefulWidget {
 class _FinanceHomePageState extends State<FinanceHomePage> {
   int _selectedIndex = 0;
 
-  String _formatCurrency(double value) {
-    final whole = value.abs().toStringAsFixed(0);
-    final s = '\$' + whole;
-    return value < 0 ? '-' + s : s;
-  }
-
   String _formatTime(DateTime date) {
     final h = date.hour > 12
         ? date.hour - 12
@@ -199,6 +193,7 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                 Builder(
                   builder: (context) {
                     final locator = ServiceProvider.of(context);
+                    final currencyService = locator.currencyService;
                     return StreamBuilder<List<BankEntity>>(
                       stream: locator.bankRepository.watchAllBanks(),
                       builder: (context, snapshot) {
@@ -207,7 +202,7 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                           0,
                           (sum, b) => sum + (b.balance),
                         );
-                        final text = _formatCurrency(total);
+                        final text = currencyService.formatWhole(total);
                         return BalanceSection(balance: text);
                       },
                     );
@@ -232,12 +227,13 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                 Builder(
                   builder: (context) {
                     final locator = ServiceProvider.of(context);
+                    final currencyService = locator.currencyService;
                     return StreamBuilder<List<BankEntity>>(
                       stream: locator.bankRepository.watchAllBanks(),
                       builder: (context, snapshot) {
                         final banks = snapshot.data ?? const <BankEntity>[];
                         final items = banks.map((b) {
-                          final amount = _formatCurrency(b.balance);
+                          final amount = currencyService.formatWhole(b.balance);
                           return BankCardData(
                             name: b.name,
                             amount: amount,
@@ -305,11 +301,12 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
                               for (final b in banks)
                                 if (b.id != null) b.id!: b.name,
                             };
+                            final currencyService = locator.currencyService;
 
                             final recent = txns.map((t) {
                               final isIncome = t.type == 'receive';
                               final sign = isIncome ? '+' : '-';
-                              final amt = _formatCurrency(t.amount);
+                              final amt = currencyService.formatWhole(t.amount);
                               final time = _formatTime(t.date);
 
                               String bankName;
@@ -445,65 +442,72 @@ class _FinanceHomePageState extends State<FinanceHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF050505),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Main content - switch pages based on selected index
-            _getCurrentPage(),
+    final currencyService = ServiceProvider.of(context).currencyService;
 
-            // Bottom Navigation - Positioned at bottom (node 2064-610)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 94,
-                decoration: const BoxDecoration(color: Colors.transparent),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    // Background bar (68px height at bottom)
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        height: 68,
-                        color: const Color(0xFF101010),
-                      ),
-                    ),
-                    // Navigation items
-                    Positioned(
-                      bottom: 20,
-                      child: SizedBox(
-                        width: 280,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildNavItem(
-                              Icons.account_balance_wallet_outlined,
-                              0,
-                            ),
-                            _buildNavItem(Icons.bar_chart_outlined, 1),
-                            const SizedBox(width: 60),
-                            _buildNavItem(Icons.auto_awesome_outlined, 2),
-                            _buildNavItem(Icons.apps_outlined, 3),
-                          ],
+    return ListenableBuilder(
+      listenable: currencyService,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: const Color(0xFF050505),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                // Main content - switch pages based on selected index
+                _getCurrentPage(),
+
+                // Bottom Navigation - Positioned at bottom (node 2064-610)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 94,
+                    decoration: const BoxDecoration(color: Colors.transparent),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        // Background bar (68px height at bottom)
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 68,
+                            color: const Color(0xFF101010),
+                          ),
                         ),
-                      ),
+                        // Navigation items
+                        Positioned(
+                          bottom: 20,
+                          child: SizedBox(
+                            width: 280,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildNavItem(
+                                  Icons.account_balance_wallet_outlined,
+                                  0,
+                                ),
+                                _buildNavItem(Icons.bar_chart_outlined, 1),
+                                const SizedBox(width: 60),
+                                _buildNavItem(Icons.auto_awesome_outlined, 2),
+                                _buildNavItem(Icons.apps_outlined, 3),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Center elevated button
+                        Positioned(top: 0, child: _buildCenterButton()),
+                      ],
                     ),
-                    // Center elevated button
-                    Positioned(top: 0, child: _buildCenterButton()),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

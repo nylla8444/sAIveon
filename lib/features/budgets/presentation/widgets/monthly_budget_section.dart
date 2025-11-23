@@ -222,7 +222,7 @@ class _MonthlyBudgetDisplay extends StatelessWidget {
             left: 0,
             top: 85,
             child: Text(
-              'Spend: \$${spent.toStringAsFixed(0)} / \$${limit.toStringAsFixed(0)}',
+              'Spend: ${ServiceProvider.of(context).currencyService.formatWhole(spent)} / ${ServiceProvider.of(context).currencyService.formatWhole(limit)}',
               style: const TextStyle(
                 color: Color(0xFF949494),
                 fontSize: 12,

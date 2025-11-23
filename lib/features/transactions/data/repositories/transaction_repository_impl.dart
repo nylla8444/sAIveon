@@ -26,6 +26,7 @@ class TransactionRepositoryImpl implements ITransactionRepository {
     if (transaction.type == 'send' && transaction.bankId != null) {
       final bank = await _database.getBankById(transaction.bankId!);
       if (bank != null && bank.balance < transaction.amount) {
+        // Note: Error messages use hardcoded $ as they are internal system messages
         throw Exception(
           'Insufficient funds. Available: \$${bank.balance.toStringAsFixed(2)}, Required: \$${transaction.amount.toStringAsFixed(2)}',
         );
@@ -42,6 +43,7 @@ class TransactionRepositoryImpl implements ITransactionRepository {
       }
       final sourceBank = await _database.getBankById(transaction.bankId!);
       if (sourceBank != null && sourceBank.balance < transaction.amount) {
+        // Note: Error messages use hardcoded $ as they are internal system messages
         throw Exception(
           'Insufficient funds in source bank. Available: \$${sourceBank.balance.toStringAsFixed(2)}, Required: \$${transaction.amount.toStringAsFixed(2)}',
         );
