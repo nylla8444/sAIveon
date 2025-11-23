@@ -8,69 +8,115 @@ import '../../../../core/di/service_locator.dart';
 import '../../domain/services/financial_data_service.dart';
 import '../../domain/entities/chat_entity.dart';
 
-class NewChatPage extends StatefulWidget {
-  const NewChatPage({super.key});
+class ChatDetailPage extends StatefulWidget {
+  final int sessionId;
+  const ChatDetailPage({super.key, required this.sessionId});
 
   @override
-  State<NewChatPage> createState() => _NewChatPageState();
+  State<ChatDetailPage> createState() => _ChatDetailPageState();
 }
 
-class _NewChatPageState extends State<NewChatPage> {
+class _ChatDetailPageState extends State<ChatDetailPage> {
   LlmProvider? _provider;
   late final FinancialDataService _financialDataService;
   String _financialContext = 'Loading your financial data in the background...';
-  int? _currentSessionId;
+  ChatSessionEntity? _session;
+  bool _isLoading = true;
   bool _isDataLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    // Don't initialize provider until data loads
+    // Don't initialize provider here - wait for financial data
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Load financial data after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadFinancialData();
+      _loadSessionAndFinancialData();
     });
   }
 
-  Future<void> _loadFinancialData() async {
+  Future<void> _loadSessionAndFinancialData() async {
     if (!mounted) return;
 
-    print('💰 [NewChatPage] Starting financial data load...');
+    print('💰 [ChatDetail] Starting session load for #${widget.sessionId}...');
 
     setState(() {
       _isDataLoaded = false;
     });
 
     final database = ServiceProvider.of(context).database;
+    final chatRepository = ServiceProvider.of(context).chatRepository;
     _financialDataService = FinancialDataService(database);
 
     try {
-      print('📊 [NewChatPage] Fetching financial summary from database...');
+      // Load session info
+      print('📋 [ChatDetail] Loading session info...');
+      final sessions = await chatRepository.watchAllChatSessions().first;
+      final session = sessions.firstWhere((s) => s.id == widget.sessionId);
+      print('✅ [ChatDetail] Session loaded: "${session.title}"');
+
+      // Load financial data
+      print('💰 [ChatDetail] Loading financial data...');
       final data = await _financialDataService.getFinancialSummary();
+      print('✅ [ChatDetail] Financial data loaded (${data.length} characters)');
+
+      // Load previous messages
+      print('💬 [ChatDetail] Loading previous messages...');
+      final messages = await chatRepository
+          .watchMessagesBySession(widget.sessionId)
+          .first;
+
+      final activeMessages = messages.where((m) => !m.isDeleted).length;
       print(
-        '✅ [NewChatPage] Financial data loaded successfully (${data.length} characters)',
+        '📊 [ChatDetail] Found $activeMessages active messages (${messages.length} total)',
       );
 
       if (mounted) {
         setState(() {
+          _session = session;
           _financialContext = data;
+          _isLoading = false;
           _isDataLoaded = true;
         });
-        print('🤖 [NewChatPage] Initializing AI provider with fresh data...');
+
+        // Reinitialize provider with actual data
+        print('🤖 [ChatDetail] Initializing AI provider...');
         _initializeProvider();
-        print('✅ [NewChatPage] AI provider ready');
+        print('✅ [ChatDetail] AI provider ready');
+
+        // Restore chat history
+        final chatMessages = messages.where((m) => !m.isDeleted).map((m) {
+          if (m.isUser) {
+            return ChatMessage.user(m.content, const []);
+          } else {
+            final llmMsg = ChatMessage.llm();
+            llmMsg.append(m.content);
+            return llmMsg;
+          }
+        }).toList();
+
+        print(
+          '📝 [ChatDetail] Restoring ${chatMessages.length} messages to UI...',
+        );
+        if (chatMessages.isNotEmpty && _provider != null) {
+          _provider!.history = chatMessages;
+          print('✅ [ChatDetail] Chat history restored');
+        } else if (chatMessages.isEmpty) {
+          print('ℹ️ [ChatDetail] No messages to restore - new chat');
+        }
       }
+
+      print('✅ [ChatDetail] Session load complete\n');
     } catch (e, stackTrace) {
-      print('❌ [NewChatPage] Error loading financial data: $e');
-      print('📋 [NewChatPage] Stack trace: $stackTrace');
+      print('❌ [ChatDetail] Error loading session: $e');
+      print('📋 [ChatDetail] Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _financialContext = 'Unable to load financial data: $e';
+          _isLoading = false;
           _isDataLoaded = true; // Mark as loaded even on error
         });
       }
@@ -78,7 +124,7 @@ class _NewChatPageState extends State<NewChatPage> {
   }
 
   void _initializeProvider() {
-    print('🔧 [NewChatPage] Initializing provider...');
+    print('🔧 [ChatDetail] Initializing provider...');
     final apiKey = Env.geminiApiKey;
     if (apiKey.isEmpty) {
       throw Exception('GEMINI_API_KEY not found in .env file');
@@ -87,58 +133,36 @@ class _NewChatPageState extends State<NewChatPage> {
     _provider = _GeminiLlmProvider(
       apiKey,
       () => _financialContext,
-      onFirstMessage: _createChatSession,
       onMessage: _saveMessage,
     );
-    print('✅ [NewChatPage] Provider initialized');
-  }
-
-  Future<void> _createChatSession(String firstMessage) async {
-    if (!mounted) return;
-
-    print('💬 [NewChatPage] Creating new chat session...');
-    final chatRepository = ServiceProvider.of(context).chatRepository;
-
-    // Create session with first message as title (truncated)
-    final title = firstMessage.length > 50
-        ? '${firstMessage.substring(0, 47)}...'
-        : firstMessage;
-
-    final session = ChatSessionEntity(
-      title: title,
-      lastMessageTime: DateTime.now(),
-    );
-
-    _currentSessionId = await chatRepository.addChatSession(session);
-    print('✅ [NewChatPage] Created chat session #$_currentSessionId: "$title"');
+    print('✅ [ChatDetail] Provider initialized');
   }
 
   Future<void> _saveMessage(String content, bool isUser) async {
-    if (_currentSessionId == null || !mounted) return;
+    if (!mounted) return;
 
     print(
-      '💾 [NewChatPage] Saving ${isUser ? "USER" : "AI"} message (session #$_currentSessionId)',
+      '💾 [ChatDetail] Saving ${isUser ? "USER" : "AI"} message (session #${widget.sessionId})',
     );
     final chatRepository = ServiceProvider.of(context).chatRepository;
 
     final message = ChatMessageEntity(
-      sessionId: _currentSessionId!,
+      sessionId: widget.sessionId,
       content: content,
       isUser: isUser,
       timestamp: DateTime.now(),
     );
 
     await chatRepository.addMessage(message);
-    print('✅ [NewChatPage] Message saved');
+    print('✅ [ChatDetail] Message saved');
 
     // Update session's last message time
-    final sessions = await chatRepository.watchAllChatSessions().first;
-    final currentSession = sessions.firstWhere(
-      (s) => s.id == _currentSessionId,
-    );
-    await chatRepository.updateChatSession(
-      currentSession.copyWith(lastMessageTime: DateTime.now()),
-    );
+    if (_session != null) {
+      await chatRepository.updateChatSession(
+        _session!.copyWith(lastMessageTime: DateTime.now()),
+      );
+      print('✅ [ChatDetail] Session timestamp updated');
+    }
   }
 
   @override
@@ -155,18 +179,21 @@ class _NewChatPageState extends State<NewChatPage> {
                 children: [
                   const CustomBackButton(),
                   const SizedBox(width: 12),
-                  const Text(
-                    'AI Financial Advisor',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                  Expanded(
+                    child: Text(
+                      _session?.title ?? 'Loading...',
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
                   // Data loading indicator
-                  if (!_isDataLoaded)
+                  if (!_isLoading && !_isDataLoaded)
                     Row(
                       children: [
                         SizedBox(
@@ -190,7 +217,7 @@ class _NewChatPageState extends State<NewChatPage> {
                         ),
                       ],
                     )
-                  else
+                  else if (!_isLoading && _isDataLoaded)
                     const Row(
                       children: [
                         Icon(
@@ -210,41 +237,26 @@ class _NewChatPageState extends State<NewChatPage> {
                       ],
                     ),
                   const SizedBox(width: 8),
-                  // Refresh button to reload financial data
                   IconButton(
                     icon: const Icon(
                       Icons.refresh,
                       color: Color(0xFFBA9BFF),
                       size: 24,
                     ),
-                    onPressed: _loadFinancialData,
+                    onPressed: _loadSessionAndFinancialData,
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
             // AI Chat View
-            if (_provider == null)
+            if (_isLoading)
               const Expanded(
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: Color(0xFFBA9BFF)),
-                      SizedBox(height: 16),
-                      Text(
-                        'Loading financial data...',
-                        style: TextStyle(
-                          fontFamily: 'Manrope',
-                          fontSize: 14,
-                          color: Color(0xFF949494),
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xFFBA9BFF)),
                 ),
               )
-            else
+            else if (_provider != null)
               Expanded(
                 child: Theme(
                   data: ThemeData.dark().copyWith(
@@ -325,15 +337,12 @@ class _NewChatPageState extends State<NewChatPage> {
                         hintText: 'Ask me anything...',
                         decoration: BoxDecoration(
                           color: const Color(0xFF101010),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
+                            color: const Color(0x1AFFFFFF),
                             width: 1,
                           ),
                         ),
-                      ),
-                      submitButtonStyle: ActionButtonStyle(
-                        iconColor: const Color(0xFFBA9BFF),
                       ),
                     ),
                   ),
@@ -348,19 +357,12 @@ class _NewChatPageState extends State<NewChatPage> {
 
 // Custom Gemini provider implementation for flutter_ai_toolkit
 class _GeminiLlmProvider extends LlmProvider with ChangeNotifier {
-  _GeminiLlmProvider(
-    this._apiKey,
-    this._getFinancialContext, {
-    this.onFirstMessage,
-    this.onMessage,
-  });
+  _GeminiLlmProvider(this._apiKey, this._getFinancialContext, {this.onMessage});
 
   final String _apiKey;
   final String Function() _getFinancialContext;
-  final Future<void> Function(String)? onFirstMessage;
   final Future<void> Function(String, bool)? onMessage;
   final List<ChatMessage> _history = [];
-  bool _isFirstMessage = true;
 
   GenerativeModel _buildModel() {
     final systemPrompt =
@@ -429,18 +431,11 @@ CRITICAL: Always refer to the financial data above for accurate information. Do 
     String prompt, {
     Iterable<Attachment> attachments = const [],
   }) async* {
-    // Create session on first message
-    if (_isFirstMessage && onFirstMessage != null) {
-      await onFirstMessage!(prompt);
-      _isFirstMessage = false;
-    }
-
     // Save user message
     if (onMessage != null) {
       await onMessage!(prompt, true);
     }
 
-    // Add user message to history
     final userMessage = ChatMessage.user(prompt, attachments);
     final llmMessage = ChatMessage.llm();
     _history.addAll([userMessage, llmMessage]);
@@ -448,10 +443,8 @@ CRITICAL: Always refer to the financial data above for accurate information. Do 
     // Build model with fresh financial data
     final model = _buildModel();
 
-    // Build full conversation history for Gemini (without system prompt)
+    // Build full conversation history (max 10 pairs)
     final conversationHistory = <Content>[];
-
-    // Add all previous user/AI exchanges (max 10 pairs to save tokens)
     final maxHistory = 10;
     final startIdx = _history.length > maxHistory * 2
         ? _history.length - (maxHistory * 2)
@@ -471,8 +464,9 @@ CRITICAL: Always refer to the financial data above for accurate information. Do 
     // Add current prompt
     conversationHistory.add(Content.text(prompt));
 
-    // Send entire conversation to Gemini with fresh context
+    // Send with fresh system context
     final response = model.generateContentStream(conversationHistory);
+
     final buffer = StringBuffer();
     await for (final chunk in response) {
       final text = chunk.text;

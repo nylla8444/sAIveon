@@ -8,6 +8,7 @@ import '../network/api_client.dart';
 /// Implements offline-first pattern with pending operations queue
 class SyncService {
   final AppDatabase _database;
+  // ignore: unused_field
   final ApiClient _apiClient;
   final Connectivity _connectivity = Connectivity();
 

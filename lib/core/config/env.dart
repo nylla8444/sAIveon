@@ -4,6 +4,7 @@ class Env {
   static String get apiBaseUrl =>
       dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
   static String get apiKey => dotenv.env['API_KEY'] ?? '';
+  static String get geminiApiKey => dotenv.env['GEMINI_API_KEY'] ?? '';
 
   static Future<void> load() async {
     try {
