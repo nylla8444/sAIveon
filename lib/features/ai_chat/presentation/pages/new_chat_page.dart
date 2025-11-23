@@ -6,6 +6,7 @@ import '../../../../core/widgets/index.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../domain/services/financial_data_service.dart';
+import '../../domain/entities/chat_entity.dart';
 
 class NewChatPage extends StatefulWidget {
   const NewChatPage({super.key});
@@ -18,6 +19,7 @@ class _NewChatPageState extends State<NewChatPage> {
   late final LlmProvider _provider;
   late final FinancialDataService _financialDataService;
   String _financialContext = 'Loading your financial data in the background...';
+  int? _currentSessionId;
 
   @override
   void initState() {
@@ -95,7 +97,59 @@ Use this data to provide informed, personalized financial guidance.''';
       systemInstruction: Content.system(systemPrompt),
     );
 
-    _provider = _GeminiLlmProvider(model);
+    _provider = _GeminiLlmProvider(
+      model,
+      onFirstMessage: _createChatSession,
+      onMessage: _saveMessage,
+    );
+  }
+
+  Future<void> _createChatSession(String firstMessage) async {
+    if (!mounted) return;
+
+    final chatRepository = ServiceProvider.of(context).chatRepository;
+
+    // Create session with first message as title (truncated)
+    final title = firstMessage.length > 50
+        ? '${firstMessage.substring(0, 47)}...'
+        : firstMessage;
+
+    final session = ChatSessionEntity(
+      title: title,
+      lastMessageTime: DateTime.now(),
+    );
+
+    _currentSessionId = await chatRepository.addChatSession(session);
+    print(
+      '✅ Created chat session with ID: $_currentSessionId and title: $title',
+    );
+  }
+
+  Future<void> _saveMessage(String content, bool isUser) async {
+    if (_currentSessionId == null || !mounted) return;
+
+    final chatRepository = ServiceProvider.of(context).chatRepository;
+
+    final message = ChatMessageEntity(
+      sessionId: _currentSessionId!,
+      content: content,
+      isUser: isUser,
+      timestamp: DateTime.now(),
+    );
+
+    await chatRepository.addMessage(message);
+    print(
+      '✅ Saved ${isUser ? 'user' : 'AI'} message to session $_currentSessionId',
+    );
+
+    // Update session's last message time
+    final sessions = await chatRepository.watchAllChatSessions().first;
+    final currentSession = sessions.firstWhere(
+      (s) => s.id == _currentSessionId,
+    );
+    await chatRepository.updateChatSession(
+      currentSession.copyWith(lastMessageTime: DateTime.now()),
+    );
   }
 
   @override
@@ -239,11 +293,14 @@ Use this data to provide informed, personalized financial guidance.''';
 
 // Custom Gemini provider implementation for flutter_ai_toolkit
 class _GeminiLlmProvider extends LlmProvider with ChangeNotifier {
-  _GeminiLlmProvider(this._model);
+  _GeminiLlmProvider(this._model, {this.onFirstMessage, this.onMessage});
 
   final GenerativeModel _model;
+  final Future<void> Function(String)? onFirstMessage;
+  final Future<void> Function(String, bool)? onMessage;
   late final ChatSession _chat = _model.startChat();
   final List<ChatMessage> _history = [];
+  bool _isFirstMessage = true;
 
   @override
   Iterable<ChatMessage> get history => _history;
@@ -276,6 +333,17 @@ class _GeminiLlmProvider extends LlmProvider with ChangeNotifier {
     String prompt, {
     Iterable<Attachment> attachments = const [],
   }) async* {
+    // Create session on first message
+    if (_isFirstMessage && onFirstMessage != null) {
+      await onFirstMessage!(prompt);
+      _isFirstMessage = false;
+    }
+
+    // Save user message
+    if (onMessage != null) {
+      await onMessage!(prompt, true);
+    }
+
     // Add user message to history
     final userMessage = ChatMessage.user(prompt, attachments);
     final llmMessage = ChatMessage.llm();
@@ -285,12 +353,19 @@ class _GeminiLlmProvider extends LlmProvider with ChangeNotifier {
     final content = _buildContent(prompt, attachments);
     final response = _chat.sendMessageStream(content);
 
+    final buffer = StringBuffer();
     await for (final chunk in response) {
       final text = chunk.text;
       if (text != null) {
         llmMessage.append(text);
+        buffer.write(text);
         yield text;
       }
+    }
+
+    // Save AI response message
+    if (onMessage != null && buffer.isNotEmpty) {
+      await onMessage!(buffer.toString(), false);
     }
 
     notifyListeners();
