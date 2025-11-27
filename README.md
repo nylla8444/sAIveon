@@ -1,26 +1,11 @@
-# Personal Finance Manager 💰
+# sAIveon - Where AI Meets Financial Discipline
 
-A comprehensive offline-first personal finance management application built with Flutter, featuring an AI-powered financial advisor, multi-currency support, and intelligent budgeting tools.
-
-## 📋 Table of Contents
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [Getting Started](#-getting-started)
-- [Database Schema](#-database-schema)
-- [Offline Capabilities](#-offline-capabilities)
-- [AI Financial Advisor](#-ai-financial-advisor)
-- [Multi-Currency Support](#-multi-currency-support)
-- [Project Structure](#-project-structure)
-- [Testing](#-testing)
-- [Screenshots](#-screenshots)
-- [Contributing](#-contributing)
-- [License](#-license)
+sAIveon is a privacy-first personal finance assistant that helps users manage their money through manual transaction entry combined with AI-driven analysis. 
 
 ## ✨ Features
 
 ### Core Financial Management
-- **📊 Multi-Bank Management**: Track multiple bank accounts, e-wallets (GCash, Maya), and credit cards
+- **📊 Multi-Bank Management**: Track multiple bank accounts, wallets, and cards. Anything you like.
 - **💸 Transaction Tracking**: Record income, expenses, and transfers with detailed categorization
 - **📈 Budget Management**: Set monthly budgets by category with visual progress tracking
 - **🔔 Scheduled Payments**: Manage recurring bills and automatic payments
